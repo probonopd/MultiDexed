@@ -5,6 +5,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 // Build on FreeBSD with:
+// cd Builds/LinuxMakefile
 // sed -i '' -e 's|stat64|stat|g'  make_helpers/juce_SimpleBinaryBuilder.cpp
 // gmake CONFIG=Release
 // or
