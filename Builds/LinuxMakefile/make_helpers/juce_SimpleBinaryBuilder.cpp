@@ -81,10 +81,10 @@ struct FileHelpers
 
     static bool isDirectory (const std::string& path)
     {
-        struct stat info;
+        struct stat64 info;
 
         return    ! path.empty()
-               && stat (path.c_str(), &info) == 0
+               && stat64 (path.c_str(), &info) == 0
                && ((info.st_mode & S_IFDIR) != 0);
     }
 

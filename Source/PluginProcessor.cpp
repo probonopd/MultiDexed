@@ -18,15 +18,14 @@ PluginAudioProcessor::PluginAudioProcessor()
     juce::File dexedFile = juce::File(dexedPath);
     const juce::FileSearchPath dexedSearchPath(dexedPath);
 
-    // juce::VST3PluginFormat vst3Format;
-    // VST/VST2
-    juce::VSTPluginFormat vstFormat;
+    juce::VST3PluginFormat vst3Format;
+    // juce::VSTPluginFormat vstFormat;
     juce::PluginDescription dexedDescription;
 
-    juce::AudioPluginInstance* dexedPluginNode1 = vstFormat.createInstanceFromDescription(dexedDescription, getSampleRate(), getBlockSize()).release();
+    juce::AudioPluginInstance* dexedPluginNode1 = vst3Format.createInstanceFromDescription(dexedDescription, getSampleRate(), getBlockSize()).release();
     dexedPluginNode1->prepareToPlay(getSampleRate(), getBlockSize());
     
-    juce::AudioPluginInstance* dexedPluginNode2 = vstFormat.createInstanceFromDescription(dexedDescription, getSampleRate(), getBlockSize()).release();
+    juce::AudioPluginInstance* dexedPluginNode2 = vst3Format.createInstanceFromDescription(dexedDescription, getSampleRate(), getBlockSize()).release();
     dexedPluginNode2->prepareToPlay(getSampleRate(), getBlockSize());
 }
 
