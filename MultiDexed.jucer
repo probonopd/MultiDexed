@@ -2,8 +2,8 @@
 
 <JUCERPROJECT id="Bo5D7S" name="MultiDexed" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginFormats="buildStandalone,buildVST3"
-              pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
-              pluginName="MultiDexed" pluginVSTNumMidiInputs="1" headerPath="/usr/local/include/vst3sdk">
+              pluginCharacteristicsValue="pluginWantsMidiIn" pluginName="MultiDexed"
+              pluginVSTNumMidiInputs="1" headerPath="/usr/local/include/vst3sdk">
   <MAINGROUP id="MkBbYX" name="MultiDexed">
     <GROUP id="{FABCA48E-9526-790D-5A35-D82794774EB8}" name="Source">
       <FILE id="t2I2Ei" name="PluginProcessor.cpp" compile="1" resource="0"
@@ -16,7 +16,7 @@
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"
-               JUCE_PLUGINHOST_VST="0" JUCE_PLUGINHOST_VST3="1" JUCE_CUSTOM_VST3_SDK="1"/>
+               JUCE_PLUGINHOST_VST="0" JUCE_PLUGINHOST_VST3="1"/>
   <EXPORTFORMATS>
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile">
       <CONFIGURATIONS>

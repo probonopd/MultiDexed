@@ -14,7 +14,7 @@
 PluginAudioProcessor::PluginAudioProcessor()
 {
     // Create two instances of the VST3 Dexed plugin
-    juce::String dexedPath = "/usr/ports/audio/dexed/work/stage/usr/local/lib/vst3/Dexed.so";
+    juce::String dexedPath = "/usr/local/lib/vst3/Dexed.so";
     juce::File dexedFile = juce::File(dexedPath);
     const juce::FileSearchPath dexedSearchPath(dexedPath);
 
