@@ -14,7 +14,7 @@
 PluginAudioProcessor::PluginAudioProcessor()
 {
 
-    juce::OwnedArray<PluginDescription> pluginDescriptions;
+    juce::OwnedArray<juce::PluginDescription> pluginDescriptions;
     juce::KnownPluginList pluginList;
     juce::AudioPluginFormatManager pluginFormatManager;
 
