@@ -61,9 +61,6 @@ private:
     std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance1;
     std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance1;
 
-    std::unique_ptr<juce::PluginNode> dexedPluginNode1;
-    std::unique_ptr<juce::PluginNode> dexedPluginNode2;
-
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessor)
 };

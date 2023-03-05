@@ -40,21 +40,13 @@ PluginAudioProcessor::PluginAudioProcessor()
     // Check that the AudioPluginInstances were created
     jassert(dexedPluginInstance1 != nullptr);
     jassert(dexedPluginInstance2 != nullptr);
-
-    // Create a PluginNode for each instance
-    dexedPluginNode1 = std::make_unique<juce::PluginNode>(std::move(dexedPluginInstance1));
-    dexedPluginNode2 = std::make_unique<juce::PluginNode>(std::move(dexedPluginInstance2));
-
-    // Check that the PluginNodes were created
-    jassert(dexedPluginNode1 != nullptr);
-    jassert(dexedPluginNode2 != nullptr);
 }
 
 PluginAudioProcessor::~PluginAudioProcessor()
 {
     // Release the plugins
-    dexedPluginNode1->releaseResources();
-    dexedPluginNode2->releaseResources();
+    dexedPluginInstance1->releaseResources();
+    dexedPluginInstance2->releaseResources();
 }
 
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -63,15 +55,15 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     setRateAndBufferSizeDetails(sampleRate, samplesPerBlock);
 
     // Update the plugin buffer sizes
-    dexedPluginNode1->prepareToPlay(sampleRate, samplesPerBlock);
-    dexedPluginNode2->prepareToPlay(sampleRate, samplesPerBlock);
+    dexedPluginInstance1->prepareToPlay(sampleRate, samplesPerBlock);
+    dexedPluginInstance2->prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void PluginAudioProcessor::releaseResources()
 {
     // Release the plugins
-    dexedPluginNode1->releaseResources();
-    dexedPluginNode2->releaseResources();
+    dexedPluginInstance1->releaseResources();
+    dexedPluginInstance2->releaseResources();
 }
 
 void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
@@ -80,12 +72,12 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // Process the audio through the first plugin
     juce::AudioBuffer<float> plugin1Buffer(buffer);
     plugin1Buffer.clear();
-    dexedPluginNode1->processBlock(plugin1Buffer, midiMessages);
+    dexedPluginInstance1->processBlock(plugin1Buffer, midiMessages);
 
     // Process the audio through the second plugin
     juce::AudioBuffer<float> plugin2Buffer(buffer);
     plugin2Buffer.clear();
-    dexedPluginNode2->processBlock(plugin2Buffer, midiMessages);
+    dexedPluginInstance2->processBlock(plugin2Buffer, midiMessages);
 
     // Combine the output of the two plugins
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
