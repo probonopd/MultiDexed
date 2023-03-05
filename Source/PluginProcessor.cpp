@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_plugin_client/juce_audio_plugin_client.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
 // Build on FreeBSD with:
@@ -11,177 +11,169 @@
 // or
 // gmake CONFIG=Debug
 
-PluginAudioProcessor::PluginAudioProcessor()
-{
-    // Create two instances of the VST3 Dexed plugin
-    juce::String dexedPath = "/usr/local/lib/vst3/Dexed.so";
-    juce::File dexedFile = juce::File(dexedPath);
-    const juce::FileSearchPath dexedSearchPath(dexedPath);
+PluginAudioProcessor::PluginAudioProcessor() {
+  // Create two instances of the VST3 Dexed plugin
+// TODO: Do not hardcode the path to the VST3 plugin but use the JUCE API to
+// find it
+#if JUCE_WINDOWS
+  juce::String dexedPath = "C:\Program Files\Common Files\VST3\Dexed.vst3";
+#else
+  juce::String dexedPath = "/usr/local/lib/vst3/Dexed.so";
+#endif
 
-    juce::VST3PluginFormat vst3Format;
-    // juce::VSTPluginFormat vstFormat;
-    juce::PluginDescription dexedDescription;
+  juce::File dexedFile = juce::File(dexedPath);
+  const juce::FileSearchPath dexedSearchPath(dexedPath);
 
-    juce::AudioPluginInstance* dexedPluginNode1 = vst3Format.createInstanceFromDescription(dexedDescription, getSampleRate(), getBlockSize()).release();
-    dexedPluginNode1->prepareToPlay(getSampleRate(), getBlockSize());
-    
-    juce::AudioPluginInstance* dexedPluginNode2 = vst3Format.createInstanceFromDescription(dexedDescription, getSampleRate(), getBlockSize()).release();
-    dexedPluginNode2->prepareToPlay(getSampleRate(), getBlockSize());
+  juce::VST3PluginFormat vst3Format;
+  // juce::VSTPluginFormat vstFormat;
+  juce::PluginDescription dexedDescription;
+
+  juce::AudioPluginInstance *dexedPluginNode1 =
+      vst3Format
+          .createInstanceFromDescription(dexedDescription, getSampleRate(),
+                                         getBlockSize())
+          .release();
+  dexedPluginNode1->prepareToPlay(getSampleRate(), getBlockSize());
+
+  juce::AudioPluginInstance *dexedPluginNode2 =
+      vst3Format
+          .createInstanceFromDescription(dexedDescription, getSampleRate(),
+                                         getBlockSize())
+          .release();
+  dexedPluginNode2->prepareToPlay(getSampleRate(), getBlockSize());
 }
 
-PluginAudioProcessor::~PluginAudioProcessor()
-{
-    // Release the plugins
-    dexedPluginNode1->releaseResources();
-    dexedPluginNode2->releaseResources();
+PluginAudioProcessor::~PluginAudioProcessor() {
+  // Release the plugins
+  dexedPluginNode1->releaseResources();
+  dexedPluginNode2->releaseResources();
 }
 
-void PluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{
-    // Update the sample rate and block size
-    setRateAndBufferSizeDetails(sampleRate, samplesPerBlock);
+void PluginAudioProcessor::prepareToPlay(double sampleRate,
+                                         int samplesPerBlock) {
+  // Update the sample rate and block size
+  setRateAndBufferSizeDetails(sampleRate, samplesPerBlock);
 
-    // Update the plugin buffer sizes
-    dexedPluginNode1->prepareToPlay(sampleRate, samplesPerBlock);
-    dexedPluginNode2->prepareToPlay(sampleRate, samplesPerBlock);
+  // Update the plugin buffer sizes
+  dexedPluginNode1->prepareToPlay(sampleRate, samplesPerBlock);
+  dexedPluginNode2->prepareToPlay(sampleRate, samplesPerBlock);
 }
 
-void PluginAudioProcessor::releaseResources()
-{
-    // Release the plugins
-    dexedPluginNode1->releaseResources();
-    dexedPluginNode2->releaseResources();
+void PluginAudioProcessor::releaseResources() {
+  // Release the plugins
+  dexedPluginNode1->releaseResources();
+  dexedPluginNode2->releaseResources();
 }
 
-void PluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-{
-    // Process the audio through the first plugin
-    juce::AudioBuffer<float> plugin1Buffer(buffer);
-    plugin1Buffer.clear();
-    dexedPluginNode1->processBlock(plugin1Buffer, midiMessages);
+void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
+                                        juce::MidiBuffer &midiMessages) {
+  // Process the audio through the first plugin
+  juce::AudioBuffer<float> plugin1Buffer(buffer);
+  plugin1Buffer.clear();
+  dexedPluginNode1->processBlock(plugin1Buffer, midiMessages);
 
-    // Process the audio through the second plugin
-    juce::AudioBuffer<float> plugin2Buffer(buffer);
-    plugin2Buffer.clear();
-    dexedPluginNode2->processBlock(plugin2Buffer, midiMessages);
+  // Process the audio through the second plugin
+  juce::AudioBuffer<float> plugin2Buffer(buffer);
+  plugin2Buffer.clear();
+  dexedPluginNode2->processBlock(plugin2Buffer, midiMessages);
 
-    // Combine the output of the two plugins
-    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-    {
-        buffer.addFrom(channel, 0, plugin1Buffer.getReadPointer(channel), buffer.getNumSamples());
-        buffer.addFrom(channel, 0, plugin2Buffer.getReadPointer(channel), buffer.getNumSamples());
-    }
+  // Combine the output of the two plugins
+  for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
+    buffer.addFrom(channel, 0, plugin1Buffer.getReadPointer(channel),
+                   buffer.getNumSamples());
+    buffer.addFrom(channel, 0, plugin2Buffer.getReadPointer(channel),
+                   buffer.getNumSamples());
+  }
 }
 
-
-juce::AudioProcessorEditor* PluginAudioProcessor::createEditor()
-{
-    return new PluginAudioProcessorEditor (*this);
+juce::AudioProcessorEditor *PluginAudioProcessor::createEditor() {
+  return new PluginAudioProcessorEditor(*this);
 }
 
-void PluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
-{
-}
+void PluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData) {}
 
-void PluginAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
-{
-}
+void PluginAudioProcessor::setStateInformation(const void *data,
+                                               int sizeInBytes) {}
 
 //==============================================================================
 // This creates new instances of the plugin..
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-    return new PluginAudioProcessor();
+juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
+  return new PluginAudioProcessor();
 }
 
-const juce::String PluginAudioProcessor::getName() const
-{
-    return JucePlugin_Name;
+const juce::String PluginAudioProcessor::getName() const {
+  return JucePlugin_Name;
 }
 
-bool PluginAudioProcessor::acceptsMidi() const
-{
-   #if JucePlugin_WantsMidiInput
-    return true;
-   #else
-    return false;
-   #endif
+bool PluginAudioProcessor::acceptsMidi() const {
+#if JucePlugin_WantsMidiInput
+  return true;
+#else
+  return false;
+#endif
 }
 
-bool PluginAudioProcessor::producesMidi() const
-{
-   #if JucePlugin_ProducesMidiOutput
-    return true;
-   #else
-    return false;
-   #endif
+bool PluginAudioProcessor::producesMidi() const {
+#if JucePlugin_ProducesMidiOutput
+  return true;
+#else
+  return false;
+#endif
 }
 
-bool PluginAudioProcessor::isMidiEffect() const
-{
-   #if JucePlugin_IsMidiEffect
-    return true;
-   #else
-    return false;
-   #endif
+bool PluginAudioProcessor::isMidiEffect() const {
+#if JucePlugin_IsMidiEffect
+  return true;
+#else
+  return false;
+#endif
 }
 
-double PluginAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
+double PluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
+
+int PluginAudioProcessor::getNumPrograms() {
+  return 1; // NB: some hosts don't cope very well if you tell them there are 0
+            // programs, so this should be at least 1, even if you're not really
+            // implementing programs.
 }
 
-int PluginAudioProcessor::getNumPrograms()
-{
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+int PluginAudioProcessor::getCurrentProgram() { return 0; }
+
+void PluginAudioProcessor::setCurrentProgram(int index) {}
+
+const juce::String PluginAudioProcessor::getProgramName(int index) {
+  return {};
 }
 
-int PluginAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
+void PluginAudioProcessor::changeProgramName(int index,
+                                             const juce::String &newName) {}
 
-void PluginAudioProcessor::setCurrentProgram (int index)
-{
-}
-
-const juce::String PluginAudioProcessor::getProgramName (int index)
-{
-    return {};
-}
-
-void PluginAudioProcessor::changeProgramName (int index, const juce::String& newName)
-{
-}
-
-bool PluginAudioProcessor::hasEditor() const
-{
-    return true; // (change this to false if you choose to not supply an editor)
+bool PluginAudioProcessor::hasEditor() const {
+  return true; // (change this to false if you choose to not supply an editor)
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool PluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
-{
-  #if JucePlugin_IsMidiEffect
-    juce::ignoreUnused (layouts);
-    return true;
-  #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-        return false;
+bool PluginAudioProcessor::isBusesLayoutSupported(
+    const BusesLayout &layouts) const {
+#if JucePlugin_IsMidiEffect
+  juce::ignoreUnused(layouts);
+  return true;
+#else
+  // This is the place where you check if the layout is supported.
+  // In this template code we only support mono or stereo.
+  // Some plugin hosts, such as certain GarageBand versions, will only
+  // load plugins that support stereo bus layouts.
+  if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() &&
+      layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+    return false;
 
     // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-   #endif
+#if !JucePlugin_IsSynth
+  if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
+    return false;
+#endif
 
-    return true;
-  #endif
+  return true;
+#endif
 }
 #endif
