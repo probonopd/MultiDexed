@@ -30,9 +30,9 @@ PluginAudioProcessor::PluginAudioProcessor()
     juce::String msg("Error Loading Plugin: ");
 
     // Create a AudioPluginInstance for each plugin
-    auto dexedPluginInstance1 = pluginFormatManager.createPluginInstance(
+    dexedPluginInstance1 = pluginFormatManager.createPluginInstance(
             *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-    auto dexedPluginInstance2 = pluginFormatManager.createPluginInstance(
+    dexedPluginInstance2 = pluginFormatManager.createPluginInstance(
             *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
 
     // Check that the AudioPluginInstances were created
