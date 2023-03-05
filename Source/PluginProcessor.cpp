@@ -21,7 +21,7 @@ PluginAudioProcessor::PluginAudioProcessor()
     juce::VST3PluginFormat *vst3 = new juce::VST3PluginFormat();
     pluginFormatManager.addFormat(vst3);
 
-    pluginList.scanAndAddFile("C:\Program Files\Common Files\VST3\Dexed.vst3", true,
+    pluginList.scanAndAddFile("C:\\Program Files\\Common Files\\VST3\\Dexed.vst3", true,
                               pluginDescriptions, *pluginFormatManager.getFormat(0));
 
     jassert(pluginDescriptions.size() > 0);
