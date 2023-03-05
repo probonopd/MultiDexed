@@ -21,20 +21,40 @@ PluginAudioProcessor::PluginAudioProcessor()
     juce::VST3PluginFormat *vst3 = new juce::VST3PluginFormat();
     pluginFormatManager.addFormat(vst3);
 
-    pluginList.scanAndAddFile("C:\\Program Files\\Common Files\\VST3\\Dexed.vst3", true,
-                              pluginDescriptions, *pluginFormatManager.getFormat(0));
+    juce::String pluginPath("C:\\Program Files\\Common Files\\VST3\\Dexed.vst3");
+
+    pluginList.scanAndAddFile(pluginPath, true, pluginDescriptions,
+                              *pluginFormatManager.getFormat(0));
 
     jassert(pluginDescriptions.size() > 0);
     juce::String msg("Error Loading Plugin: ");
 
-    auto dexedPluginNode1 = pluginFormatManager.createPluginInstance(*pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-    auto dexedPluginNode2 = pluginFormatManager.createPluginInstance(*pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-    // dexedPluginNode1->prepareToPlay(getSampleRate(), getBlockSize());
-    // dexedPluginNode2->prepareToPlay(getSampleRate(), getBlockSize());
+    // Create a AudioPluginInstance for each plugin
+    std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance1 =
+            pluginFormatManager.createPluginInstance(*pluginDescriptions[0], getSampleRate(),
+                                                     getBlockSize(), msg);
+    std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance2 =
+            pluginFormatManager.createPluginInstance(*pluginDescriptions[0], getSampleRate(),
+                                                     getBlockSize(), msg);
+
+    // Check that the AudioPluginInstances were created
+    jassert(dexedPluginInstance1 != nullptr);
+    jassert(dexedPluginInstance2 != nullptr);
+
+    // Create a PluginNode for each instance
+    dexedPluginNode1 = std::make_unique<juce::PluginNode>(std::move(dexedPluginInstance1));
+    dexedPluginNode2 = std::make_unique<juce::PluginNode>(std::move(dexedPluginInstance2));
+
+    // Check that the PluginNodes were created
+    jassert(dexedPluginNode1 != nullptr);
+    jassert(dexedPluginNode2 != nullptr);
 }
 
 PluginAudioProcessor::~PluginAudioProcessor()
 {
+    // Release the plugins
+    dexedPluginNode1->releaseResources();
+    dexedPluginNode2->releaseResources();
 }
 
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
