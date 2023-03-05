@@ -34,6 +34,8 @@
         <MODULEPATH id="juce_gui_extra" path="./JUCE/modules"/>
         <MODULEPATH id="juce_gui_basics" path="./JUCE/modules"/>
         <MODULEPATH id="juce_graphics" path="./JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="./JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="./JUCE/modules"/>
       </MODULEPATHS>
     </VS2019>
     <XCODE_MAC targetFolder="Builds/MacOSX" vstLegacyFolder="./modules/vst2sdk">
@@ -52,6 +54,8 @@
         <MODULEPATH id="juce_audio_formats" path="./JUCE/modules"/>
         <MODULEPATH id="juce_audio_devices" path="./JUCE/modules"/>
         <MODULEPATH id="juce_audio_basics" path="./JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="./JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="./JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile" vstLegacyFolder="./modules/vst2sdk"
@@ -72,6 +76,8 @@
         <MODULEPATH id="juce_audio_formats" path="./JUCE/modules"/>
         <MODULEPATH id="juce_audio_devices" path="./JUCE/modules"/>
         <MODULEPATH id="juce_audio_basics" path="./JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="./JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="./JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
   </EXPORTFORMATS>
@@ -86,6 +92,8 @@
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
   </MODULES>
 </JUCERPROJECT>
 
