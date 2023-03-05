@@ -16,7 +16,9 @@ jobs:
         submodules: recursive
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: "Download Projucer"
-      run: sh -ex ./build/download-projucer.sh
+      run: |
+           git clone -b 7.0.5 --depth 1 https://github.com/juce-framework/JUCE JUCE
+           bash -ex ./build/download-projucer.sh
       shell: bash
       env:
         OS: windows
@@ -40,7 +42,9 @@ jobs:
         submodules: recursive
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: "Download Projucer"
-      run: sh -ex ./build/download-projucer.sh
+      run: |
+           git clone -b 7.0.5 --depth 1 https://github.com/juce-framework/JUCE JUCE
+           bash -ex ./build/download-projucer.sh
       shell: bash
       env:
         OS: osx
@@ -66,7 +70,9 @@ jobs:
         submodules: recursive
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: "Download Projucer"
-      run: sh -ex ./build/download-projucer.sh
+      run: |
+           git clone -b 7.0.5 --depth 1 https://github.com/juce-framework/JUCE JUCE
+           bash -ex ./build/download-projucer.sh
       shell: bash
       env:
         OS: linux
