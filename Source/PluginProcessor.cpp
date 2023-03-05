@@ -30,12 +30,10 @@ PluginAudioProcessor::PluginAudioProcessor()
     juce::String msg("Error Loading Plugin: ");
 
     // Create a AudioPluginInstance for each plugin
-    std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance1 =
-            pluginFormatManager.createPluginInstance(*pluginDescriptions[0], getSampleRate(),
-                                                     getBlockSize(), msg);
-    std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance2 =
-            pluginFormatManager.createPluginInstance(*pluginDescriptions[0], getSampleRate(),
-                                                     getBlockSize(), msg);
+    auto dexedPluginInstance1 = pluginFormatManager.createPluginInstance(
+            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
+    auto dexedPluginInstance2 = pluginFormatManager.createPluginInstance(
+            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
 
     // Check that the AudioPluginInstances were created
     jassert(dexedPluginInstance1 != nullptr);
