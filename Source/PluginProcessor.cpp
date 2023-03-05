@@ -27,13 +27,13 @@ PluginAudioProcessor::PluginAudioProcessor()
     jassert(pluginDescriptions.size() > 0);
     juce::String msg("Error Loading Plugin: ");
 
-    juce::AudioPluginInstance *dexedPluginNode1 = pluginFormatManager.createPluginInstance(
-            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-    juce::AudioPluginInstance *dexedPluginNode2 = pluginFormatManager.createPluginInstance(
-            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
+    // juce::AudioPluginInstance *dexedPluginNode1 = pluginFormatManager.createPluginInstance(
+    //         *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
+    // juce::AudioPluginInstance *dexedPluginNode2 = pluginFormatManager.createPluginInstance(
+    //         *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
 
-    dexedPluginNode1->prepareToPlay(getSampleRate(), getBlockSize());
-    dexedPluginNode2->prepareToPlay(getSampleRate(), getBlockSize());
+    // dexedPluginNode1->prepareToPlay(getSampleRate(), getBlockSize());
+    // dexedPluginNode2->prepareToPlay(getSampleRate(), getBlockSize());
 }
 
 PluginAudioProcessor::~PluginAudioProcessor()
