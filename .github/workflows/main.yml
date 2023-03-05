@@ -32,7 +32,9 @@ jobs:
       uses: actions/upload-artifact@v3.1.2
       with:
         name: MultiDexed-win
-        path: ./Builds/VisualStudio2019/x64/Release/ConsoleApp/MultiDexed*
+        path: |
+              ./Builds/VisualStudio2019/x64/Release/VST3/MultiDexed*
+              ./Builds/VisualStudio2019/x64/Release/Standalone Plugin/MultiDexed*
   build-osx:
     runs-on: macos-latest
     steps:
