@@ -12,21 +12,14 @@
 // gmake CONFIG=Debug
 
 PluginAudioProcessor::PluginAudioProcessor() {
+  
   // Create two instances of the VST3 Dexed plugin
-// TODO: Do not hardcode the path to the VST3 plugin but use the JUCE API to
-// find it
-#if JUCE_WINDOWS
-  juce::String dexedPath = "C:\Program Files\Common Files\VST3\Dexed.vst3";
-#else
-  juce::String dexedPath = "/usr/local/lib/vst3/Dexed.so";
-#endif
-
-  juce::File dexedFile = juce::File(dexedPath);
-  const juce::FileSearchPath dexedSearchPath(dexedPath);
-
   juce::VST3PluginFormat vst3Format;
-  // juce::VSTPluginFormat vstFormat;
   juce::PluginDescription dexedDescription;
+
+  dexedDescription.name = "Dexed";
+  dexedDescription.manufacturerName = "Digital Suburban";
+  dexedDescription.pluginFormatName = "VST3";
 
   juce::AudioPluginInstance *dexedPluginNode1 =
       vst3Format
