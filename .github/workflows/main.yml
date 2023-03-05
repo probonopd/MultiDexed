@@ -16,7 +16,7 @@ jobs:
         submodules: recursive
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: "Download Projucer"
-      run: ./build/download-projucer.sh
+      run: sh -ex ./build/download-projucer.sh
       shell: bash
       env:
         OS: windows
@@ -24,7 +24,7 @@ jobs:
       run: echo "version=$((Select-Xml -Path MultiDexed.jucer -XPath '//JUCERPROJECT/@version').Node.Value)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
       id: get-version
     - name: "Build MultiDexed"
-      run: ./build/build-win.sh
+      run: sh -ex ./build/build-win.sh
       shell: bash
     - name: Upload Artifact
       uses: actions/upload-artifact@v3.1.2
@@ -40,7 +40,7 @@ jobs:
         submodules: recursive
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: "Download Projucer"
-      run: ./build/download-projucer.sh
+      run: sh -ex ./build/download-projucer.sh
       shell: bash
       env:
         OS: osx
@@ -50,7 +50,7 @@ jobs:
       run: echo "version=$(xmlstarlet sel -t -v 'string(//JUCERPROJECT/@version)' MultiDexed.jucer)" >> $GITHUB_ENV
       id: get-version
     - name: "Build OSX"
-      run: ./build/build-osx.sh
+      run: sh -ex ./build/build-osx.sh
       shell: bash
     - name: Upload Artifact
       uses: actions/upload-artifact@v3.1.2
@@ -66,7 +66,7 @@ jobs:
         submodules: recursive
         token: ${{ secrets.REPO_ACCESS_TOKEN }}
     - name: "Download Projucer"
-      run: ./build/download-projucer.sh
+      run: sh -ex ./build/download-projucer.sh
       shell: bash
       env:
         OS: linux
@@ -80,7 +80,7 @@ jobs:
       run: echo "version=$(xmlstarlet sel -t -v 'string(//JUCERPROJECT/@version)' MultiDexed.jucer)" >> $GITHUB_ENV
       id: get-version
     - name: "Build Linux"
-      run: ./build/build-linux.sh
+      run: sh -ex ./build/build-linux.sh
       shell: bash
     - name: Add version in binary name
       run: mv ./Builds/LinuxMakefile/build/MultiDexed-linux ./Builds/LinuxMakefile/build/MultiDexed-${{ env.version }}-linux
