@@ -57,8 +57,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    juce::AudioPluginInstance* dexedPluginNode1;
-    juce::AudioPluginInstance* dexedPluginNode2;
+    std::unique_ptr<juce::AudioPluginInstance> dexedPluginNode1;
+    std::unique_ptr<juce::AudioPluginInstance> dexedPluginNode2;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginAudioProcessor)
 };
