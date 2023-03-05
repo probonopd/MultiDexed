@@ -1,0 +1,112 @@
+# Based on https://github.com/OwlPlug/owlplug-scanner/blob/master/.github/workflows/main.yml
+name: MultiDexed
+
+on: 
+  push:
+    branches: 
+      - '**'
+
+jobs:
+  build-win:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3.3.0
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+    - name: "Download Projucer"
+      run: ./build/download-projucer.sh
+      shell: bash
+      env:
+        OS: windows
+    - name: Get MultiDexed Version
+      run: echo "version=$((Select-Xml -Path MultiDexed.jucer -XPath '//JUCERPROJECT/@version').Node.Value)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+      id: get-version
+    - name: "Build MultiDexed"
+      run: ./build/build-win.sh
+      shell: bash
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: MultiDexed-win
+        path: ./Builds/VisualStudio2019/x64/Release/ConsoleApp/MultiDexed-${{ env.version }}-win.exe
+  build-osx:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3.3.0
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+    - name: "Download Projucer"
+      run: ./build/download-projucer.sh
+      shell: bash
+      env:
+        OS: osx
+    - name: Install XmlStarlet
+      run: brew install xmlstarlet
+    - name: Get MultiDexed Version
+      run: echo "version=$(xmlstarlet sel -t -v 'string(//JUCERPROJECT/@version)' MultiDexed.jucer)" >> $GITHUB_ENV
+      id: get-version
+    - name: "Build OSX"
+      run: ./build/build-osx.sh
+      shell: bash
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: MultiDexed-osx
+        path: ./Builds/MacOSX/build/Release/MultiDexed-${{ env.version }}-osx
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3.3.0
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+    - name: "Download Projucer"
+      run: ./build/download-projucer.sh
+      shell: bash
+      env:
+        OS: linux
+    - name : Update packages
+      run: sudo apt update
+    - name : Install Juce dev dependencies
+      run: sudo apt install libasound2-dev libcurl4-openssl-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev
+    - name: Install XmlStarlet
+      run: sudo apt install xmlstarlet
+    - name: Get MultiDexed Version
+      run: echo "version=$(xmlstarlet sel -t -v 'string(//JUCERPROJECT/@version)' MultiDexed.jucer)" >> $GITHUB_ENV
+      id: get-version
+    - name: "Build Linux"
+      run: ./build/build-linux.sh
+      shell: bash
+    - name: Add version in binary name
+      run: mv ./Builds/LinuxMakefile/build/MultiDexed-linux ./Builds/LinuxMakefile/build/MultiDexed-${{ env.version }}-linux
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: MultiDexed-linux
+        path: ./Builds/LinuxMakefile/build/MultiDexed-${{ env.version }}-linux
+  release:
+    name: "Release"
+    needs: [build-win, build-osx, build-linux]
+    if: github.ref == 'refs/heads/master'
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v3.3.0
+      - name: Retrieve artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./build
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.REPO_ACCESS_TOKEN }}"
+          prerelease: true
+          automatic_release_tag: latest
+          title: MultiDexed Latest
+          files: |
+            build/MultiDexed-osx/*
+            build/MultiDexed-win/*
+            build/MultiDexed-linux/*
