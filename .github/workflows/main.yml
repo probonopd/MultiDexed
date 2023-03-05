@@ -32,7 +32,7 @@ jobs:
       uses: actions/upload-artifact@v3.1.2
       with:
         name: MultiDexed-win
-        path: ./Builds/VisualStudio2019/x64/Release/ConsoleApp/MultiDexed-${{ env.version }}-win.exe
+        path: ./Builds/VisualStudio2019/x64/Release/ConsoleApp/MultiDexed*
   build-osx:
     runs-on: macos-latest
     steps:
@@ -60,7 +60,7 @@ jobs:
       uses: actions/upload-artifact@v3.1.2
       with:
         name: MultiDexed-osx
-        path: ./Builds/MacOSX/build/Release/MultiDexed-${{ env.version }}-osx
+        path: ./Builds/MacOSX/build/Release/MultiDexed*
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -88,13 +88,11 @@ jobs:
     - name: "Build Linux"
       run: sh -ex ./build/build-linux.sh
       shell: bash
-    - name: Add version in binary name
-      run: mv ./Builds/LinuxMakefile/build/MultiDexed-linux ./Builds/LinuxMakefile/build/MultiDexed-${{ env.version }}-linux
     - name: Upload Artifact
       uses: actions/upload-artifact@v3.1.2
       with:
         name: MultiDexed-linux
-        path: ./Builds/LinuxMakefile/build/MultiDexed-${{ env.version }}-linux
+        path: ./Builds/LinuxMakefile/build/MultiDexed*
   release:
     name: "Release"
     needs: [build-win, build-osx, build-linux]
