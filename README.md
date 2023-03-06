@@ -6,7 +6,7 @@ MultiDexed ist a standalone application and a VST plugin for Windows, macOS, and
 
 MultiDexed is especially useful in DAWs with a limited number of tracks, such as Ableton Live Lite.
 
-__Currently it is not functional yet. Any help appreciated.__
+__Currently it is not functional yet. Any help appreciated.__ In the meantime, with https://gitlab.com/kushview/element/ you can do similar things, albeit a bit more manually.
 
 - [x] Make it build on GitHub Actions for Windows, macOS, and Linux
 - [ ] Make it build on CirrusCI for FreeBSD
