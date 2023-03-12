@@ -4,13 +4,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
-// Build on FreeBSD with:
-// cd Builds/LinuxMakefile
-// sed -i '' -e 's|stat64|stat|g'  make_helpers/juce_SimpleBinaryBuilder.cpp
-// gmake CONFIG=Release
-// or
-// gmake CONFIG=Debug
-
 PluginAudioProcessor::PluginAudioProcessor()
 {
 
@@ -38,14 +31,12 @@ PluginAudioProcessor::PluginAudioProcessor()
     // Check that the AudioPluginInstances were created
     jassert(dexedPluginInstance1 != nullptr);
     jassert(dexedPluginInstance2 != nullptr);
+
+    std::cout << "Loaded Plugin: " << dexedPluginInstance1->getName().toStdString() << std::endl;
+    std::cout << "Loaded Plugin: " << dexedPluginInstance2->getName().toStdString() << std::endl;
 }
 
-PluginAudioProcessor::~PluginAudioProcessor()
-{
-    // Release the plugins
-    dexedPluginInstance1->releaseResources();
-    dexedPluginInstance2->releaseResources();
-}
+PluginAudioProcessor::~PluginAudioProcessor() { }
 
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
@@ -67,20 +58,43 @@ void PluginAudioProcessor::releaseResources()
 void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                         juce::MidiBuffer &midiMessages)
 {
-    // Process the audio through the first plugin
-    juce::AudioBuffer<float> plugin1Buffer(buffer);
-    plugin1Buffer.clear();
-    dexedPluginInstance1->processBlock(plugin1Buffer, midiMessages);
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
 
-    // Process the audio through the second plugin
-    juce::AudioBuffer<float> plugin2Buffer(buffer);
-    plugin2Buffer.clear();
-    dexedPluginInstance2->processBlock(plugin2Buffer, midiMessages);
+    // Allocate memory for the plugin buffer
+    juce::AudioBuffer<float> dexedPluginBuffer1(numChannels, numSamples);
 
-    // Combine the output of the two plugins
-    for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
-        buffer.addFrom(channel, 0, plugin1Buffer.getReadPointer(channel), buffer.getNumSamples());
-        buffer.addFrom(channel, 0, plugin2Buffer.getReadPointer(channel), buffer.getNumSamples());
+    // Initialize the plugin buffer
+    dexedPluginBuffer1.clear();
+
+    // Set the size of the plugin buffer
+    dexedPluginBuffer1.setSize(numChannels, numSamples);
+
+    // Process the buffer with the first plugin
+    dexedPluginInstance1->processBlock(dexedPluginBuffer1, midiMessages);
+
+    // Print the values in the plugin buffer
+
+    for (int channel = 0; channel < dexedPluginBuffer1.getNumChannels(); ++channel) {
+        for (int sample = 0; sample < dexedPluginBuffer1.getNumSamples(); ++sample) {
+            std::printf("%02x ",
+                        (int)(dexedPluginBuffer1.getSample(channel, sample) * 127.0f + 128.0f));
+        }
+    }
+
+    // The values we are seeing (80 80 80 80 80 80 80 80 80 80 ...) suggest that the samples in
+    // pluginBuffer1 are all around the 0.0 value. This could mean that there is an issue with the
+    // configuration of dexedPluginInstance1, or that the MIDI messages being sent to it are not
+    // producing any meaningful audio output.
+
+    // Process each sample in the buffer
+    for (int channel = 0; channel < numChannels; ++channel) {
+        for (int sample = 0; sample < numSamples; ++sample) {
+            // Get the sample from the first plugin
+            const float value = dexedPluginBuffer1.getSample(channel, sample);
+            // Set the sample in the buffer
+            buffer.setSample(channel, sample, value);
+        }
     }
 }
 
@@ -160,7 +174,7 @@ void PluginAudioProcessor::changeProgramName(int index, const juce::String &newN
 
 bool PluginAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return true;
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations

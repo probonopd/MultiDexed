@@ -57,10 +57,14 @@ public:
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
 
-private:
     std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance1;
     std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance2;
 
+    // Buffers for the plugin instances
+    juce::AudioBuffer<float> dexedPluginBuffer1;
+    juce::AudioBuffer<float> dexedPluginBuffer2;
+
+private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessor)
 };

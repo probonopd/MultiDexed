@@ -23,12 +23,23 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() { }
 //==============================================================================
 void PluginAudioProcessorEditor::paint(juce::Graphics &g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
-    g.setColour(juce::Colours::white);
-    g.setFont(15.0f);
-    g.drawFittedText("Fork me on GitHub", getLocalBounds(), juce::Justification::centred, 1);
+    // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
+    auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
+
+    // Show its user interface (editor)
+    auto editor = pluginAudioProcessor->dexedPluginInstance1->createEditorIfNeeded();
+
+    // Ask the plugin for the width and height of its editor
+    auto width = editor->getWidth();
+    auto height = editor->getHeight();
+
+    // Set the size of our editor to match the plugin's editor
+    setSize(width, height);
+
+    // Make the plugin's editor visibles
+    editor->setVisible(true);
+    addAndMakeVisible(editor);
 }
 
 void PluginAudioProcessorEditor::resized()
