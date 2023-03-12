@@ -18,7 +18,7 @@ Using this approach requires a powerful recent computer with "lots" (16 GB) of R
 * Boot Windows (first boot takes ~20 minutes)
 * Install Guest Extensions (6.1.36 is what comes with the VirtualBox on FreeBSD 13.1-RELEASE with 2023Q1 packages)
 * Reboot
-* **Why can't I resize the screen?** 
+* **Why can't I resize the screen?** (see below for workaround)
 * Shut down
 * Make another snapshot
 * Download and install JUCE to `C:\JUCE`
@@ -30,6 +30,15 @@ Using this approach requires a powerful recent computer with "lots" (16 GB) of R
 * It compiles straight away without a hitch
 * Running the standalone version seems to crash, as a window is never shown
 * Running it with the Visual Studio Community 2022 debugger to see in the code crashes occur
+
+As for the screen resultion, I had to run
+
+```
+sudo vboxmanage list vms # Get the name of the VM
+sudo VBoxManage setextradata global GUI/MaxGuestResolution any
+sudo VBoxManage setextradata  "WinDev2302Eval" "CustomVideoMode1" "1920x1080x32"
+sudo VBoxManage controlvm "WinDev2302Eval" setvideomodehint 1920 1080 32
+```
 
 ## Linux
 
