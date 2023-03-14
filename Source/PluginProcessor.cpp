@@ -13,7 +13,33 @@
 PluginAudioProcessor::PluginAudioProcessor()
 {
 
+    juce::OwnedArray<juce::PluginDescription> pluginDescriptions;
+    juce::KnownPluginList pluginList;
+    juce::AudioPluginFormatManager pluginFormatManager;
 
+    juce::VST3PluginFormat *vst3 = new juce::VST3PluginFormat();
+    pluginFormatManager.addFormat(vst3);
+
+    juce::String pluginPath("C:\\Program Files\\Common Files\\VST3\\Dexed.vst3");
+
+    pluginList.scanAndAddFile(pluginPath, true, pluginDescriptions,
+                              *pluginFormatManager.getFormat(0));
+
+    jassert(pluginDescriptions.size() > 0);
+    juce::String msg("Error Loading Plugin: ");
+
+    // Create a AudioPluginInstance for each plugin
+    dexedPluginInstance1 = pluginFormatManager.createPluginInstance(
+            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
+    dexedPluginInstance2 = pluginFormatManager.createPluginInstance(
+            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
+
+    // Check that the AudioPluginInstances were created
+    jassert(dexedPluginInstance1 != nullptr);
+    jassert(dexedPluginInstance2 != nullptr);
+
+    std::cout << "Loaded Plugin: " << dexedPluginInstance1->getName().toStdString() << std::endl;
+    std::cout << "Loaded Plugin: " << dexedPluginInstance2->getName().toStdString() << std::endl;
 }
 
 PluginAudioProcessor::~PluginAudioProcessor()
@@ -84,34 +110,6 @@ void PluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes
 // This creates new instances of the plugin..
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
-    juce::OwnedArray<juce::PluginDescription> pluginDescriptions;
-    juce::KnownPluginList pluginList;
-    juce::AudioPluginFormatManager pluginFormatManager;
-
-    juce::VST3PluginFormat *vst3 = new juce::VST3PluginFormat();
-    pluginFormatManager.addFormat(vst3);
-
-    juce::String pluginPath("C:\\Program Files\\Common Files\\VST3\\Dexed.vst3");
-
-    pluginList.scanAndAddFile(pluginPath, true, pluginDescriptions,
-                              *pluginFormatManager.getFormat(0));
-
-    jassert(pluginDescriptions.size() > 0);
-    juce::String msg("Error Loading Plugin: ");
-
-    // Create a AudioPluginInstance for each plugin
-    dexedPluginInstance1 = pluginFormatManager.createPluginInstance(
-            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-    dexedPluginInstance2 = pluginFormatManager.createPluginInstance(
-            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-
-    // Check that the AudioPluginInstances were created
-    jassert(dexedPluginInstance1 != nullptr);
-    jassert(dexedPluginInstance2 != nullptr);
-
-    std::cout << "Loaded Plugin: " << dexedPluginInstance1->getName().toStdString() << std::endl;
-    std::cout << "Loaded Plugin: " << dexedPluginInstance2->getName().toStdString() << std::endl;
-    
     return new PluginAudioProcessor();
 }
 
