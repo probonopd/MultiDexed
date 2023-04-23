@@ -4,6 +4,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
+
 // Build on FreeBSD with:
 // sed -i '' -e 's|stat64|stat|g'  make_helpers/juce_SimpleBinaryBuilder.cpp
 // gmake CONFIG=Release
@@ -20,12 +21,48 @@ PluginAudioProcessor::PluginAudioProcessor()
     juce::VST3PluginFormat *vst3 = new juce::VST3PluginFormat();
     pluginFormatManager.addFormat(vst3);
 
-    juce::String pluginPath("C:\\Program Files\\Common Files\\VST3\\Dexed.vst3");
+    juce::String pluginPath;
 
+    // Check which operating system we are running on
+    // and set the plugin path accordingly
+
+    // Linux
+    if (juce::SystemStats::getOperatingSystemType() == juce::SystemStats::OperatingSystemType::Linux) {
+        pluginPath = "/usr/lib/vst3/Dexed.vst3";
+    }
+
+    // Windows
+    if (juce::SystemStats::getOperatingSystemType() == juce::SystemStats::OperatingSystemType::Windows) {
+        pluginPath = "C:\\Program Files\\VST3\\Dexed.vst3";
+    }
+
+    // MacOS
+    if (juce::SystemStats::getOperatingSystemType() == juce::SystemStats::OperatingSystemType::MacOSX) {
+        pluginPath = "/Library/Audio/Plug-Ins/VST3/Dexed.vst3";
+    }
+
+    // FreeBSD
+    if (juce::SystemStats::getOperatingSystemType() == juce::SystemStats::OperatingSystemType::UnknownOS) {
+        pluginPath = "/usr/local/lib/vst3/Dexed.vst3";
+    }
+
+    // Print the plugin path or error if not found
+    if (pluginPath.isEmpty()) {
+        std::cout << "Error: Plugin not found" << std::endl;
+
+    } else {
+        std::cout << "Plugin Path: " << pluginPath.toStdString() << std::endl;
+    }
+    
     pluginList.scanAndAddFile(pluginPath, true, pluginDescriptions,
                               *pluginFormatManager.getFormat(0));
 
-    jassert(pluginDescriptions.size() > 0);
+    // If no plugin was found, print an error
+    if (pluginDescriptions.size() == 0) {
+        std::cout << "Error: Dexed plugin not found" << std::endl;
+        return;
+    }
+
     juce::String msg("Error Loading Plugin: ");
 
     // Create a AudioPluginInstance for each plugin
@@ -34,7 +71,12 @@ PluginAudioProcessor::PluginAudioProcessor()
     dexedPluginInstance2 = pluginFormatManager.createPluginInstance(
             *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
 
-    // Check that the AudioPluginInstances were created
+    // Check that the AudioPluginInstances were created, if not print an error
+    if (dexedPluginInstance1 == nullptr || dexedPluginInstance2 == nullptr) {
+        std::cout << msg.toStdString() << std::endl;
+        return;
+    }
+
     jassert(dexedPluginInstance1 != nullptr);
     jassert(dexedPluginInstance2 != nullptr);
 
