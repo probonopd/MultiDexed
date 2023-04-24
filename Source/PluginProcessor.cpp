@@ -12,8 +12,8 @@
 // gmake CONFIG=Debug
 
 PluginAudioProcessor::PluginAudioProcessor()
+    : juce::AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
-
     juce::OwnedArray<juce::PluginDescription> pluginDescriptions;
     juce::KnownPluginList pluginList;
     juce::AudioPluginFormatManager pluginFormatManager;
@@ -27,17 +27,17 @@ PluginAudioProcessor::PluginAudioProcessor()
     // and set the plugin path accordingly
 
     // Linux
-    if (juce::SystemStats::getOperatingSystemType() == juce::SystemStats::OperatingSystemType::Linux) {
+    if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::Linux) {
         pluginPath = "/usr/lib/vst3/Dexed.vst3";
     }
 
     // Windows
-    if (juce::SystemStats::getOperatingSystemType() == juce::SystemStats::OperatingSystemType::Windows) {
-        pluginPath = "C:\\Program Files\\VST3\\Dexed.vst3";
+    if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::Windows) {
+        pluginPath = "C:\\Program Files\\Common Files\\VST3\\Dexed.vst3";
     }
 
     // MacOS
-    if (juce::SystemStats::getOperatingSystemType() == juce::SystemStats::OperatingSystemType::MacOSX) {
+    if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::MacOSX) {
         pluginPath = "/Library/Audio/Plug-Ins/VST3/Dexed.vst3";
     }
 
@@ -77,8 +77,8 @@ PluginAudioProcessor::PluginAudioProcessor()
         return;
     }
 
-    jassert(dexedPluginInstance1 != nullptr);
-    jassert(dexedPluginInstance2 != nullptr);
+    jassert(dexedPluginInstance1);
+    jassert(dexedPluginInstance2);
 
     std::cout << "Loaded Plugin: " << dexedPluginInstance1->getName().toStdString() << std::endl;
     std::cout << "Loaded Plugin: " << dexedPluginInstance2->getName().toStdString() << std::endl;
@@ -87,13 +87,18 @@ PluginAudioProcessor::PluginAudioProcessor()
 PluginAudioProcessor::~PluginAudioProcessor()
 {
     // Release the plugins
-    dexedPluginInstance1->releaseResources();
-    dexedPluginInstance2->releaseResources();
+    if (dexedPluginInstance1)
+        dexedPluginInstance1->releaseResources();
+    if (dexedPluginInstance2)
+        dexedPluginInstance2->releaseResources();
 }
 
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     int maximumExpectedSamplesPerBlock = samplesPerBlock;
+
+    if (!dexedPluginInstance1 || !dexedPluginInstance2)
+        return;
 
     dexedPluginInstance1->releaseResources();
     dexedPluginInstance1->setRateAndBufferSizeDetails(sampleRate, maximumExpectedSamplesPerBlock);
@@ -128,15 +133,18 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 void PluginAudioProcessor::releaseResources()
 {
     // Release the plugins
-    dexedPluginInstance1->releaseResources();
-    dexedPluginInstance2->releaseResources();
+    if (dexedPluginInstance1)
+        dexedPluginInstance1->releaseResources();
+    if (dexedPluginInstance2)
+        dexedPluginInstance2->releaseResources();
 }
 
 void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                         juce::MidiBuffer &midiMessages)
 {
     // Process the audio through the first plugin
-    dexedPluginInstance1->processBlock(buffer, midiMessages);
+    if (dexedPluginInstance1)
+        dexedPluginInstance1->processBlock(buffer, midiMessages);
 }
 
 juce::AudioProcessorEditor *PluginAudioProcessor::createEditor()
@@ -215,31 +223,11 @@ void PluginAudioProcessor::changeProgramName(int index, const juce::String &newN
 
 bool PluginAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    // Only permit editor to open if plugins instantiated properly
+    return (dexedPluginInstance1 && dexedPluginInstance2);
 }
 
-#ifndef JucePlugin_PreferredChannelConfigurations
 bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
-#  if JucePlugin_IsMidiEffect
-    juce::ignoreUnused(layouts);
-    return true;
-#  else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-        && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-        return false;
-
-        // This checks if the input layout matches the output layout
-#    if !JucePlugin_IsSynth
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-#    endif
-
-    return true;
-#  endif
+    return (layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo());
 }
-#endif
