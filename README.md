@@ -12,7 +12,7 @@ __Currently it is not functional yet. Any help appreciated.__ In the meantime, w
 - [ ] Make it build on CirrusCI for FreeBSD
 - [x] Do not crash when loaded into REAPER for Windows (running on FreeBSD with Proton WINE)
 - [x] Load Dexed VST and create multiple instances of it
-- [ ] Make the instances produce sound
+- [x] Make the instances produce sound (thanks [__@getdunne__](https://github.com/getdunne))
 - [ ] Each instance can be slightly detuned
 - [ ] Each instance can be stereo shifted (panned)
 - [ ] Add GUI for selecting number of instances, amount of detune, and amount of panning
