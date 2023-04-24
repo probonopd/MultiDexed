@@ -9,12 +9,13 @@ MultiDexed is especially useful in DAWs with a limited number of tracks, such as
 __Currently it is not fully functional yet.__ In the meantime, with https://gitlab.com/kushview/element/ you can do similar things, albeit a bit more manually.
 
 - [x] Make it build on GitHub Actions for Windows, macOS, and Linux
-- [ ] Make it build on CirrusCI for FreeBSD
 - [x] Do not crash when loaded into REAPER for Windows (running on FreeBSD with Proton WINE)
 - [x] Load Dexed VST and create multiple instances of it
 - [x] Make the instances produce sound (thanks [__@getdunne__](https://github.com/getdunne))
-- [ ] Each instance can be slightly detuned
-- [ ] Each instance can be stereo shifted (panned)
+- [x] Each instance is slightly detuned
+- [x] Each instance is stereo shifted (panned)
 - [ ] Add GUI for selecting number of instances, amount of detune, and amount of panning
 - [ ] Save and restore plugin state
+- [ ] Make it build for Linux on Raspberry Pi (aarch64)
+- [ ] Make it build on CirrusCI for FreeBSD
 - [ ] Stretch goal: Make it read, write, and use [MiniDexed](https://github.com/probonopd/MultiDexed) performance files

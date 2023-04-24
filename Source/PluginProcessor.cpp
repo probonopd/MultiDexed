@@ -128,6 +128,23 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     dexedPluginInstance2->setBusesLayout(getBusesLayout());
     dexedPluginInstance2->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+
+    // Configure the plugin instances to our liking
+
+    // Set the program for each plugin instance
+    dexedPluginInstance1->setCurrentProgram(5);
+    dexedPluginInstance2->setCurrentProgram(5);
+
+    // Detune the plugin instances slightly
+    dexedPluginInstance1->setParameterNotifyingHost(3, 0.5 - 0.05);
+    dexedPluginInstance2->setParameterNotifyingHost(3, 0.5 + 0.05);
+
+    // Print the names of the parameters and their values
+    for (int i = 0; i < dexedPluginInstance1->getNumParameters(); i++) {
+        if (!dexedPluginInstance1->getParameterName(i).contains("MIDI CC")) {
+            std::cout << "Parameter " << i << ": " << dexedPluginInstance1->getParameterName(i).toStdString() << " = " << dexedPluginInstance1->getParameter(i) << std::endl;
+        }
+    }
 }
 
 void PluginAudioProcessor::releaseResources()
@@ -142,9 +159,32 @@ void PluginAudioProcessor::releaseResources()
 void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                         juce::MidiBuffer &midiMessages)
 {
-    // Process the audio through the first plugin
-    if (dexedPluginInstance1)
-        dexedPluginInstance1->processBlock(buffer, midiMessages);
+    // Make empty initialized buffer for each plugin instance
+    juce::AudioBuffer<float> buffer1(buffer.getNumChannels(), buffer.getNumSamples());
+    juce::AudioBuffer<float> buffer2(buffer.getNumChannels(), buffer.getNumSamples());
+
+    // Process the audio through the first plugin instance
+    if (dexedPluginInstance1) {
+        dexedPluginInstance1->processBlock(buffer1, midiMessages);
+    }
+
+    // Process the audio through the second plugin instance
+    if (dexedPluginInstance2) {
+        dexedPluginInstance2->processBlock(buffer2, midiMessages);
+    }
+
+    // Combine the audio from the two plugins, taking into account that the result should not be louder than the input
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+            // Stereo pan the instances; halfway between center and full left/right
+            // this means that each channel will have some of both instances
+            float pan = (channel == 0) ? 0.25 : 0.75;
+            buffer.setSample(channel, sample, (buffer1.getSample(channel, sample) * (1 - pan) + buffer2.getSample(channel, sample) * pan) / 2);
+        }
+    }
+
+    // 
+
 }
 
 juce::AudioProcessorEditor *PluginAudioProcessor::createEditor()
