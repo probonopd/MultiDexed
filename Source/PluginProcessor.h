@@ -57,12 +57,14 @@ public:
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
 
-    std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance1;
-    std::unique_ptr<juce::AudioPluginInstance> dexedPluginInstance2;
+    const int numberOfInstances = 8;
+
+    // Make an array that can hold numberOfInstances juce::AudioProcessor instances
+    std::array<std::unique_ptr<juce::AudioProcessor>, 8> dexedPluginInstances;
 
     // Buffers for the plugin instances
-    juce::AudioBuffer<float> dexedPluginBuffer1;
-    juce::AudioBuffer<float> dexedPluginBuffer2;
+    std::array<juce::AudioBuffer<float>, 8> dexedPluginBuffers;
+
 
 private:
     //==============================================================================

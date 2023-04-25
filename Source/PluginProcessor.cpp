@@ -65,84 +65,101 @@ PluginAudioProcessor::PluginAudioProcessor()
 
     juce::String msg("Error Loading Plugin: ");
 
-    // Create a AudioPluginInstance for each plugin
-    dexedPluginInstance1 = pluginFormatManager.createPluginInstance(
-            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-    dexedPluginInstance2 = pluginFormatManager.createPluginInstance(
-            *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
-
-    // Check that the AudioPluginInstances were created, if not print an error
-    if (dexedPluginInstance1 == nullptr || dexedPluginInstance2 == nullptr) {
-        std::cout << msg.toStdString() << std::endl;
-        return;
+    // Create a AudioPluginInstances from the pluginDescriptions
+    // and put them in the dexedPluginInstances array
+    for (int i = 0; i < numberOfInstances; i++) {
+        dexedPluginInstances[i] = pluginFormatManager.createPluginInstance(
+                *pluginDescriptions[0], getSampleRate(), getBlockSize(), msg);
     }
 
-    jassert(dexedPluginInstance1);
-    jassert(dexedPluginInstance2);
+    // Check that the AudioPluginInstances were created, if not print an error
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            std::cout << msg.toStdString() << std::endl;
+            return;
+        }
+    }
 
-    std::cout << "Loaded Plugin: " << dexedPluginInstance1->getName().toStdString() << std::endl;
-    std::cout << "Loaded Plugin: " << dexedPluginInstance2->getName().toStdString() << std::endl;
+    for (int i = 0; i < numberOfInstances; i++) {
+        // jassert the existence of the AudioPluginInstance
+        jassert(dexedPluginInstances[i] != nullptr);
+    }
+
+    // Print the plugin name and vendor for each plugin instance
+    for (int i = 0; i < numberOfInstances; i++) {
+        std::cout << "Plugin Name: " << dexedPluginInstances[i]->getName().toStdString() << std::endl;
+    }
 }
 
 PluginAudioProcessor::~PluginAudioProcessor()
 {
     // Release the plugins
-    if (dexedPluginInstance1)
-        dexedPluginInstance1->releaseResources();
-    if (dexedPluginInstance2)
-        dexedPluginInstance2->releaseResources();
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] != nullptr) {
+            dexedPluginInstances[i]->releaseResources();
+        }
+    }
 }
 
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     int maximumExpectedSamplesPerBlock = samplesPerBlock;
 
-    if (!dexedPluginInstance1 || !dexedPluginInstance2)
-        return;
+    
+    for (int i = 0; i < numberOfInstances; i++) {
+        
+        if (dexedPluginInstances[i] == nullptr) {
+            return;
+        }
 
-    dexedPluginInstance1->releaseResources();
-    dexedPluginInstance1->setRateAndBufferSizeDetails(sampleRate, maximumExpectedSamplesPerBlock);
-    dexedPluginInstance2->releaseResources();
-    dexedPluginInstance2->setRateAndBufferSizeDetails(sampleRate, maximumExpectedSamplesPerBlock);
+        dexedPluginInstances[i]->releaseResources();
+        dexedPluginInstances[i]->setRateAndBufferSizeDetails(sampleRate, maximumExpectedSamplesPerBlock);
 
-    // sync number of buses
-    for (int dir = 0; dir < 2; ++dir) {
-        const bool isInput = (dir == 0);
-        int expectedNumBuses = getBusCount(isInput);
-        int requiredNumBuses1 = dexedPluginInstance1->getBusCount(isInput);
-        int requiredNumBuses2 = dexedPluginInstance2->getBusCount(isInput);
+        // sync number of buses
 
-        for (; expectedNumBuses < requiredNumBuses1; expectedNumBuses++)
-            dexedPluginInstance1->addBus(isInput);
-        for (; expectedNumBuses < requiredNumBuses2; expectedNumBuses++)
-            dexedPluginInstance2->addBus(isInput);
+        // TODO: Do we need nuberIfInstances instead of the hardcoded 2?
+        for (int dir = 0; dir < 2; ++dir) {
+            const bool isInput = (dir == 0);
+            int expectedNumBuses = getBusCount(isInput);
+            int requiredNumBuses1 = dexedPluginInstances[i]->getBusCount(isInput);
 
-        for (; requiredNumBuses1 < expectedNumBuses; requiredNumBuses1++)
-            dexedPluginInstance1->removeBus(isInput);
-        for (; requiredNumBuses2 < expectedNumBuses; requiredNumBuses2++)
-            dexedPluginInstance2->removeBus(isInput);
+            for (; expectedNumBuses < requiredNumBuses1; expectedNumBuses++)
+                dexedPluginInstances[i]->addBus(isInput);
+
+            for (; requiredNumBuses1 < expectedNumBuses; requiredNumBuses1++)
+                dexedPluginInstances[i]->removeBus(isInput);
+
+        }
+
+        dexedPluginInstances[i]->setBusesLayout(getBusesLayout());
+        dexedPluginInstances[i]->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+
+        // Set the program for each plugin instance
+        dexedPluginInstances[i]->setCurrentProgram(5);        
+
     }
-
-    dexedPluginInstance1->setBusesLayout(getBusesLayout());
-    dexedPluginInstance1->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
-
-    dexedPluginInstance2->setBusesLayout(getBusesLayout());
-    dexedPluginInstance2->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
 
     // Configure the plugin instances to our liking
 
-    // Set the program for each plugin instance
-    dexedPluginInstance1->setCurrentProgram(5);
-    dexedPluginInstance2->setCurrentProgram(5);
+    // Detune the plugin instances in the range between 0.3 and 0.6
+    for (int i = 0; i < numberOfInstances; i++) {
+        float range = 0.6 - 0.4;
+        float detune = 0.4 + i * range/numberOfInstances;
+        dexedPluginInstances[i]->setParameterNotifyingHost(3, detune);
+    }
 
-    // Detune the plugin instances slightly
-    dexedPluginInstance1->setParameterNotifyingHost(3, 0.5 - 0.05);
-    dexedPluginInstance2->setParameterNotifyingHost(3, 0.5 + 0.05);
+    // Set volume of some plugin instances to 0;
+    // 8 instances playing in unison is too much
+    dexedPluginInstances[1]->setParameterNotifyingHost(2, 0);
+    dexedPluginInstances[2]->setParameterNotifyingHost(2, 0);
+    dexedPluginInstances[5]->setParameterNotifyingHost(2, 0);
+    dexedPluginInstances[6]->setParameterNotifyingHost(2, 0);
+
 
     // Print the names of the parameters and their values
-    for (int i = 0; i < dexedPluginInstance1->getNumParameters(); i++) {
-        if (!dexedPluginInstance1->getParameterName(i).contains("MIDI CC")) {
-            std::cout << "Parameter " << i << ": " << dexedPluginInstance1->getParameterName(i).toStdString() << " = " << dexedPluginInstance1->getParameter(i) << std::endl;
+    for (int i = 0; i < dexedPluginInstances[0]->getNumParameters(); i++) {
+        if (!dexedPluginInstances[0]->getParameterName(i).contains("MIDI CC")) {
+            std::cout << "Parameter " << i << ": " << dexedPluginInstances[0]->getParameterName(i).toStdString() << " = " << dexedPluginInstances[0]->getParameter(i) << std::endl;
         }
     }
 }
@@ -150,38 +167,53 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 void PluginAudioProcessor::releaseResources()
 {
     // Release the plugins
-    if (dexedPluginInstance1)
-        dexedPluginInstance1->releaseResources();
-    if (dexedPluginInstance2)
-        dexedPluginInstance2->releaseResources();
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] != nullptr) {
+            dexedPluginInstances[i]->releaseResources();
+        }
+    }
 }
 
 void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                         juce::MidiBuffer &midiMessages)
 {
-    // Make empty initialized buffer for each plugin instance
-    juce::AudioBuffer<float> buffer1(buffer.getNumChannels(), buffer.getNumSamples());
-    juce::AudioBuffer<float> buffer2(buffer.getNumChannels(), buffer.getNumSamples());
-
-    // Process the audio through the first plugin instance
-    if (dexedPluginInstance1) {
-        dexedPluginInstance1->processBlock(buffer1, midiMessages);
-    }
-
-    // Process the audio through the second plugin instance
-    if (dexedPluginInstance2) {
-        dexedPluginInstance2->processBlock(buffer2, midiMessages);
-    }
-
-    // Combine the audio from the two plugins, taking into account that the result should not be louder than the input
-    for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            // Stereo pan the instances; halfway between center and full left/right
-            // this means that each channel will have some of both instances
-            float pan = (channel == 0) ? 0.25 : 0.75;
-            buffer.setSample(channel, sample, (buffer1.getSample(channel, sample) * (1 - pan) + buffer2.getSample(channel, sample) * pan) / 2);
+    int numberOfUnmutedInstances = 0;
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i]->getParameter(2)>0) {
+            numberOfUnmutedInstances++;
         }
     }
+    for (int i = 0; i < numberOfInstances; i++) {
+        // Make empty initialized buffer for each plugin instance in dexedPluginBuffers
+        dexedPluginBuffers[i] = juce::AudioBuffer<float>(buffer.getNumChannels(), buffer.getNumSamples());
+        // Process the audio through each plugin instance
+        if (dexedPluginInstances[i]) {
+            dexedPluginInstances[i]->processBlock(dexedPluginBuffers[i], midiMessages);
+        }
+    }
+
+    // Combine the sound of all the plugin instances
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+            float sum = 0;
+            int i;
+            for (i = 0; i < numberOfInstances; i++) {
+                sum += dexedPluginBuffers[i].getSample(channel, sample);
+                // Pan instances; instance 0 is full left, 1 a bit less left, ... , last instance is full right
+                float pan = (float)i / (numberOfInstances - 1);
+                if (channel == 0) {
+                    sum += dexedPluginBuffers[i].getSample(channel, sample) * (1 - pan);
+                }
+                else {
+                    sum += dexedPluginBuffers[i].getSample(channel, sample) * pan;
+                }
+            }
+
+            buffer.setSample(channel, sample, sum / numberOfUnmutedInstances);
+
+        }
+    }
+
 
     // 
 
@@ -264,7 +296,11 @@ void PluginAudioProcessor::changeProgramName(int index, const juce::String &newN
 bool PluginAudioProcessor::hasEditor() const
 {
     // Only permit editor to open if plugins instantiated properly
-    return (dexedPluginInstance1 && dexedPluginInstance2);
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return false;
+        }
+    }
 }
 
 bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const

@@ -32,5 +32,14 @@ private:
     // Pointer to Dexed's editor instance
     juce::AudioProcessorEditor* dexedEditor;
 
+    // Pointer to our button
+    juce::TextButton* button;
+
+    // Pointer to our tabbed component
+    std::unique_ptr<juce::TabbedComponent> tabbedComponent;
+
+    // Array with 8 pointers to our Dexed components
+    std::unique_ptr<juce::Component> dexedComponents[8];
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginAudioProcessorEditor)
 };

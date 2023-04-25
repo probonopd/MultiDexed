@@ -16,19 +16,30 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
     auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
 
-    // Show its user interface (editor)
-    dexedEditor = pluginAudioProcessor->dexedPluginInstance1->createEditorIfNeeded();
+    // Create a tabbed component
+    tabbedComponent = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
+    addAndMakeVisible(*tabbedComponent);
 
-    // Ask the plugin for the width and height of its editor
-    auto width = dexedEditor->getWidth();
-    auto height = dexedEditor->getHeight();
+    // Get the background color of the window
+    auto backgroundColor = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
 
-    // Set the size of our editor to match the plugin's editor
-    setSize(width, height);
+    // Create a tab for each instance of Dexed
+    for (int i = 0; i < pluginAudioProcessor->numberOfInstances; i++) {
+      dexedComponents[i] = std::make_unique<juce::Component>();
+      pluginAudioProcessor->dexedPluginInstances[i]->createEditorIfNeeded();
+      dexedComponents[i]->addAndMakeVisible(pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor());
+      tabbedComponent->addTab(juce::String(i+1), backgroundColor, dexedComponents[i].get(), true);
+      dexedEditor = pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor();
+      dexedComponents[i]->setSize(dexedEditor->getWidth(), dexedEditor->getHeight());
+      tabbedComponent->setSize(dexedComponents[i]->getWidth(), dexedComponents[i]->getHeight() + tabbedComponent->getTabBarDepth());
+    }
+        
+    // Make the tabbed component visible
+    tabbedComponent->setVisible(true);
 
-    // Make the plugin's editor visibles
-    dexedEditor->setVisible(true);
-    addAndMakeVisible(dexedEditor);
+    // Set the size of the editor window
+    setSize(tabbedComponent->getWidth(), tabbedComponent->getHeight());
+
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
