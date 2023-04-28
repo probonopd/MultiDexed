@@ -29,9 +29,6 @@ private:
     // access the processor object that created it.
     PluginAudioProcessor& audioProcessor;
 
-    // Pointer to Dexed's editor instance
-    juce::AudioProcessorEditor* dexedEditor;
-
     // Pointer to our button
     juce::TextButton* button;
 
@@ -40,6 +37,9 @@ private:
 
     // Array with 8 pointers to our Dexed components
     std::unique_ptr<juce::Component> dexedComponents[8];
+
+    // Array with 8 pointers to our Dexed editors
+    juce::AudioProcessorEditor* dexedEditors[8];
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginAudioProcessorEditor)
 };

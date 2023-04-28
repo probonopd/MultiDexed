@@ -301,6 +301,7 @@ bool PluginAudioProcessor::hasEditor() const
             return false;
         }
     }
+    return true;
 }
 
 bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const

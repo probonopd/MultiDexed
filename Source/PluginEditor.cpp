@@ -16,34 +16,33 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
     auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
 
-    // Create a tabbed component
-    tabbedComponent = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
-    addAndMakeVisible(*tabbedComponent);
-
-    // Get the background color of the window
-    auto backgroundColor = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
-
-    // Create a tab for each instance of Dexed
+    // Add the Dexed editors to the window
+    float heightFactor = 0.86;
     for (int i = 0; i < pluginAudioProcessor->numberOfInstances; i++) {
-      dexedComponents[i] = std::make_unique<juce::Component>();
-      pluginAudioProcessor->dexedPluginInstances[i]->createEditorIfNeeded();
-      dexedComponents[i]->addAndMakeVisible(pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor());
-      tabbedComponent->addTab(juce::String(i+1), backgroundColor, dexedComponents[i].get(), true);
-      dexedEditor = pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor();
-      dexedComponents[i]->setSize(dexedEditor->getWidth(), dexedEditor->getHeight());
-      tabbedComponent->setSize(dexedComponents[i]->getWidth(), dexedComponents[i]->getHeight() + tabbedComponent->getTabBarDepth());
+      dexedEditors[i] = pluginAudioProcessor->dexedPluginInstances[i]->createEditorIfNeeded();
+      // Scale the user interface of the Dexed editor to 0.5
+      dexedEditors[i]->setScaleFactor(0.5);
+      // Crop the Dexed editor: reduce the height to cut off the virtual keyboard
+      dexedEditors[i]->setSize(dexedEditors[i]->getWidth(), dexedEditors[i]->getHeight() * heightFactor);
+      addAndMakeVisible(dexedEditors[i]);
+      // Show the Dexed editor
+      dexedEditors[i]->setVisible(true);
+      // Move each Dexed editor: 3 rows of up to 3 editors
+      dexedEditors[i]->setTopLeftPosition((i % 3) * dexedEditors[i]->getWidth(), (i / 3) * dexedEditors[i]->getHeight());
     }
-        
-    // Make the tabbed component visible
-    tabbedComponent->setVisible(true);
 
-    // Set the size of the editor window
-    setSize(tabbedComponent->getWidth(), tabbedComponent->getHeight());
-
+    // Set size of the window to the size of the Dexed editors
+    setSize(dexedEditors[0]->getWidth() * 3, dexedEditors[0]->getHeight() * 3);
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    delete dexedEditor;
+    // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
+    auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
+    for (int i = 0; i < pluginAudioProcessor->numberOfInstances; i++) {
+      dexedEditors[i] = nullptr;
+      dexedComponents[i] = nullptr;
+    }
+    tabbedComponent = nullptr;
 }
 
 //==============================================================================
