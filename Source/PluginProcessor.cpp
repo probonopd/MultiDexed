@@ -286,7 +286,12 @@ int PluginAudioProcessor::getCurrentProgram()
     return dexedPluginInstances[0]->getCurrentProgram();
 }
 
-void PluginAudioProcessor::setCurrentProgram(int index) { }
+// setCurrentProgram() is called when the user changes the program in the host
+void PluginAudioProcessor::setCurrentProgram(int index)
+{
+    // Update the program in instance 0, the other instances will follow
+    dexedPluginInstances[0]->setCurrentProgram(index);
+}
 
 const juce::String PluginAudioProcessor::getProgramName(int index)
 {
