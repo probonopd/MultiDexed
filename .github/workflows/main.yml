@@ -55,16 +55,23 @@ jobs:
     - name: Get MultiDexed Version
       run: echo "version=$(xmlstarlet sel -t -v 'string(//JUCERPROJECT/@version)' MultiDexed.jucer)" >> $GITHUB_ENV
       id: get-version
-    - name: "Build OSX"
+    - name: "Build macOS"
       run: sh -ex ./build/build-osx.sh
+      shell: bash
+    - name: "zip macOS"
+      run: |
+           cd ./Builds/MacOSX/build/Release/
+           zip -r MultiDexed.vst3.macOS.zip MultiDexed.vst3
+           zip -r MultiDexed.app.macOS.zip MultiDexed.app
+           cd -
       shell: bash
     - name: Upload Artifact
       uses: actions/upload-artifact@v3.1.2
       with:
         name: MultiDexed-osx
         path: |
-              ./Builds/MacOSX/build/Release/MultiDexed.vst3
-              ./Builds/MacOSX/build/Release/MultiDexed.app
+              ./Builds/MacOSX/build/Release/MultiDexed.vst3.macOS.zip
+              ./Builds/MacOSX/build/Release/MultiDexed.app.macOS.zip
   build-linux:
     runs-on: ubuntu-20.04
     steps:
