@@ -117,4 +117,6 @@ jobs:
           automatic_release_tag: latest
           title: MultiDexed Latest
           files: |
-            build/MultiDexed-*
+                 /home/runner/work/MultiDexed/MultiDexed/build/MultiDexed-linux
+                 /home/runner/work/MultiDexed/MultiDexed/build/MultiDexed-osx
+                 /home/runner/work/MultiDexed/MultiDexed/build/MultiDexed-win
