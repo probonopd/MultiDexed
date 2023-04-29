@@ -33,6 +33,7 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
 
     // Set size of the window to the size of the Dexed editors
     setSize(dexedEditors[0]->getWidth() * 3, dexedEditors[0]->getHeight() * 3);
+
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
@@ -55,4 +56,6 @@ void PluginAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+
+
 }

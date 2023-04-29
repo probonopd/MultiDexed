@@ -141,8 +141,8 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     // Configure the plugin instances to our liking
 
-    // Detune the plugin instances in the range between 0.3 and 0.6
-    for (int i = 0; i < numberOfInstances; i++) {
+    // Detune the plugin instances in the range between 0.4 and 0.6
+    for (int i = 1; i < numberOfInstances; i++) {
         float range = 0.6 - 0.4;
         float detune = 0.4 + i * range/numberOfInstances;
         dexedPluginInstances[i]->setParameterNotifyingHost(3, detune);
@@ -150,18 +150,22 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     // Set volume of some plugin instances to 0;
     // 8 instances playing in unison is too much
-    dexedPluginInstances[1]->setParameterNotifyingHost(2, 0);
     dexedPluginInstances[2]->setParameterNotifyingHost(2, 0);
-    dexedPluginInstances[5]->setParameterNotifyingHost(2, 0);
-    dexedPluginInstances[6]->setParameterNotifyingHost(2, 0);
-
-
-    // Print the names of the parameters and their values
+    dexedPluginInstances[3]->setParameterNotifyingHost(2, 0);
+    dexedPluginInstances[4]->setParameterNotifyingHost(2, 0);
+    dexedPluginInstances[7]->setParameterNotifyingHost(2, 0);
+    
     for (int i = 0; i < dexedPluginInstances[0]->getNumParameters(); i++) {
-        if (!dexedPluginInstances[0]->getParameterName(i).contains("MIDI CC")) {
-            std::cout << "Parameter " << i << ": " << dexedPluginInstances[0]->getParameterName(i).toStdString() << " = " << dexedPluginInstances[0]->getParameter(i) << std::endl;
-        }
-    }
+        // Print the names of the parameters and their values
+        // if (!dexedPluginInstances[0]->getParameterName(i).contains("MIDI CC")) {
+        //     std::cout << "Parameter " << i << ": " << dexedPluginInstances[0]->getParameterName(i).toStdString() << " = " << dexedPluginInstances[0]->getParameter(i) << std::endl;
+        // }
+        // Add listener to each parameter
+        juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[i];
+        parameter->addListener(this);
+    
+    }   
+     
 }
 
 void PluginAudioProcessor::releaseResources()
@@ -178,12 +182,12 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                         juce::MidiBuffer &midiMessages)
 {
     int numberOfUnmutedInstances = 0;
-    for (int i = 0; i < numberOfInstances; i++) {
+    for (int i = 1; i < numberOfInstances; i++) {
         if (dexedPluginInstances[i]->getParameter(2)>0) {
             numberOfUnmutedInstances++;
         }
     }
-    for (int i = 0; i < numberOfInstances; i++) {
+    for (int i = 1; i < numberOfInstances; i++) {
         // Make empty initialized buffer for each plugin instance in dexedPluginBuffers
         dexedPluginBuffers[i] = juce::AudioBuffer<float>(buffer.getNumChannels(), buffer.getNumSamples());
         // Process the audio through each plugin instance
@@ -197,10 +201,10 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
             float sum = 0;
             int i;
-            for (i = 0; i < numberOfInstances; i++) {
+            for (i = 1; i < numberOfInstances; i++) {
                 sum += dexedPluginBuffers[i].getSample(channel, sample);
-                // Pan instances; instance 0 is full left, 1 a bit less left, ... , last instance is full right
-                float pan = (float)i / (numberOfInstances - 1);
+                // Pan instances; instance 1 is full left, 2 a bit less left, ... , last instance is full right
+                float pan = (float)i / (numberOfInstances - 3);
                 if (channel == 0) {
                     sum += dexedPluginBuffers[i].getSample(channel, sample) * (1 - pan);
                 }
@@ -269,29 +273,29 @@ bool PluginAudioProcessor::isMidiEffect() const
 
 double PluginAudioProcessor::getTailLengthSeconds() const
 {
-    return 0.0;
+    return dexedPluginInstances[0]->getTailLengthSeconds();
 }
 
 int PluginAudioProcessor::getNumPrograms()
 {
-    return 1; // NB: some hosts don't cope very well if you tell them there are 0
-              // programs, so this should be at least 1, even if you're not really
-              // implementing programs.
+    return dexedPluginInstances[0]->getNumPrograms();
 }
 
 int PluginAudioProcessor::getCurrentProgram()
 {
-    return 0;
+    return dexedPluginInstances[0]->getCurrentProgram();
 }
 
 void PluginAudioProcessor::setCurrentProgram(int index) { }
 
 const juce::String PluginAudioProcessor::getProgramName(int index)
 {
-    return {};
+    return dexedPluginInstances[0]->getProgramName(index);
 }
 
-void PluginAudioProcessor::changeProgramName(int index, const juce::String &newName) { }
+void PluginAudioProcessor::changeProgramName(int index, const juce::String &newName) {
+    dexedPluginInstances[0]->changeProgramName(index, newName);
+}
 
 bool PluginAudioProcessor::hasEditor() const
 {
@@ -307,4 +311,26 @@ bool PluginAudioProcessor::hasEditor() const
 bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
     return (layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo());
+}
+
+// Because we inherit from AudioProcessorValueTreeState::Listener, we need to implement this method
+void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newValue)
+{
+    // Get the name of the parameter that changed
+    juce::String parameterName = dexedPluginInstances[0]->getParameterName(parameterIndex);
+
+    std::cout << "Parameter " << parameterIndex << ": " << parameterName.toStdString() << " = " << newValue << std::endl;
+
+    // Update the value of the parameter in all other plugin instances
+    for (int i = 1; i < numberOfInstances; i++) {
+        juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
+        parameter->setValueNotifyingHost(newValue);
+        // FIXME: Why does the above work for some parameters but not others (e.g. "OP1 F COARSE")?
+    }
+}
+
+// Because we inherit from AudioProcessorValueTreeState::Listener, we need to implement this method
+void PluginAudioProcessor::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
+{
+    // Not used
 }

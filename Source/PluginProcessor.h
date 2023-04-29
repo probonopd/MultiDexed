@@ -13,7 +13,9 @@
 //==============================================================================
 /**
  */
-class PluginAudioProcessor : public juce::AudioProcessor
+class PluginAudioProcessor : public juce::AudioProcessor,
+                             juce::AudioProcessorParameter::Listener
+                             // https://www.youtube.com/watch?v=Bw_OkHNpj1M&t=1990s
 #if JucePlugin_Enable_ARA
     ,
                              public juce::AudioProcessorARAExtension
@@ -57,13 +59,19 @@ public:
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
 
-    const int numberOfInstances = 8;
+    const int numberOfInstances = 9;
 
     // Make an array that can hold numberOfInstances juce::AudioProcessor instances
-    std::array<std::unique_ptr<juce::AudioProcessor>, 8> dexedPluginInstances;
+    std::array<std::unique_ptr<juce::AudioProcessor>, 9> dexedPluginInstances;
 
     // Buffers for the plugin instances
-    std::array<juce::AudioBuffer<float>, 8> dexedPluginBuffers;
+    std::array<juce::AudioBuffer<float>, 9> dexedPluginBuffers;
+
+    // Because we inherit from juce::AudioProcessorParameter::Listener, we need to implement these methods
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
+
+    void handleMidiMessage(juce::MidiInput *source, const juce::MidiMessage &message);
 
 
 private:
