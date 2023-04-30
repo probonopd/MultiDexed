@@ -107,7 +107,7 @@ void PluginAudioProcessor::detune()
     for (int i = 1; i < numberOfInstances; i++) {
         float range = 0.6 - 0.4;
         float detune = 0.4 + i * range/numberOfInstances;
-        dexedPluginInstances[i]->setParameterNotifyingHost(3, detune);
+        dexedPluginInstances[i]->getParameters()[3]->setValueNotifyingHost(detune);
     }
 }
 
@@ -163,12 +163,12 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     // Set volume of some plugin instances to 0;
     // 8 instances playing in unison is too much
-    dexedPluginInstances[2]->setParameterNotifyingHost(2, 0);
-    dexedPluginInstances[3]->setParameterNotifyingHost(2, 0);
-    dexedPluginInstances[4]->setParameterNotifyingHost(2, 0);
-    dexedPluginInstances[7]->setParameterNotifyingHost(2, 0);
+    dexedPluginInstances[2]->getParameters()[2]->setValueNotifyingHost(0);
+    dexedPluginInstances[3]->getParameters()[2]->setValueNotifyingHost(0);
+    dexedPluginInstances[4]->getParameters()[2]->setValueNotifyingHost(0);
+    dexedPluginInstances[7]->getParameters()[2]->setValueNotifyingHost(0);   
     
-    for (int i = 0; i < dexedPluginInstances[0]->getNumParameters(); i++) {
+    for (int i = 0; i < dexedPluginInstances[0]->getParameters().size(); i++) {
         // Print the names of the parameters and their values
         // if (!dexedPluginInstances[0]->getParameterName(i).contains("MIDI CC")) {
         //     std::cout << "Parameter " << i << ": " << dexedPluginInstances[0]->getParameterName(i).toStdString() << " = " << dexedPluginInstances[0]->getParameter(i) << std::endl;
@@ -196,7 +196,7 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 {
     int numberOfUnmutedInstances = 0;
     for (int i = 1; i < numberOfInstances; i++) {
-        if (dexedPluginInstances[i]->getParameter(2)>0) {
+        if (dexedPluginInstances[i]->getParameters()[2]->getValue()>0) {
             numberOfUnmutedInstances++;
         }
     }
@@ -246,6 +246,8 @@ void PluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData) {
     if (dexedPluginInstances[0] != nullptr) {
         return dexedPluginInstances[0]->getStateInformation(destData);
     }
+    // TODO: Should probably save the state of all instances individually;
+    // how do other plugin hosts save the state of multiple plugin instances?
 }
 
 void PluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes) { 
@@ -258,6 +260,8 @@ void PluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes
         detune();
         shouldSynchronize = true;
     }
+    // TODO: Should probably load the state of all instances from the saved state individually;
+    // how do other plugin hosts save the state of multiple plugin instances?
 }
 
 //==============================================================================
@@ -349,8 +353,10 @@ bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) co
 // Because we inherit from AudioProcessorValueTreeState::Listener, we need to implement this method
 void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
-    // Get the name of the parameter that changed
-    juce::String parameterName = dexedPluginInstances[0]->getParameterName(parameterIndex);
+    // Get the parameter that changed
+    juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[parameterIndex];
+    // Get the name of the parameter
+    juce::String parameterName = parameter->getName(100);
 
     std::cout << "Parameter " << parameterIndex << ": " << parameterName.toStdString() << " = " << newValue << std::endl;
 
