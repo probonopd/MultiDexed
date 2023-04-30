@@ -139,6 +139,14 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     }
 
+    // Get the plugin state from the first plugin instance
+    // and apply it to all plugin instances
+    juce::MemoryBlock state;
+    dexedPluginInstances[0]->getStateInformation(state);
+    for (int i = 1; i < numberOfInstances; i++) {
+        dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
+    }
+
     // Configure the plugin instances to our liking
 
     // Detune the plugin instances in the range between 0.4 and 0.6
@@ -228,9 +236,21 @@ juce::AudioProcessorEditor *PluginAudioProcessor::createEditor()
     return new PluginAudioProcessorEditor(*this);
 }
 
-void PluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData) { }
+void PluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData) {
+    // Return state of instance 0
+    if (dexedPluginInstances[0] != nullptr) {
+        return dexedPluginInstances[0]->getStateInformation(destData);
+    }
+}
 
-void PluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes) { }
+void PluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes) { 
+    // Set state of instance 0, but prevent infinite loop
+    if (dexedPluginInstances[0] != nullptr) {
+        shouldSetStateInformation = false;
+        return dexedPluginInstances[0]->setStateInformation(data, sizeInBytes);
+        shouldSetStateInformation = true;
+    }
+}
 
 //==============================================================================
 // This creates new instances of the plugin..

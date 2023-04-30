@@ -61,6 +61,8 @@ public:
 
     const int numberOfInstances = 9;
 
+    bool shouldSetStateInformation = true;
+
     // Make an array that can hold numberOfInstances juce::AudioProcessor instances
     std::array<std::unique_ptr<juce::AudioProcessor>, 9> dexedPluginInstances;
 
