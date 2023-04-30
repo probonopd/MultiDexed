@@ -109,6 +109,14 @@ void PluginAudioProcessor::detune()
         float detune = 0.4 + i * range/numberOfInstances;
         dexedPluginInstances[i]->getParameters()[3]->setValueNotifyingHost(detune);
     }
+
+    // Set volume of some plugin instances to 0;
+    // 8 instances playing in unison is too much
+    dexedPluginInstances[2]->getParameters()[2]->setValueNotifyingHost(0);
+    dexedPluginInstances[3]->getParameters()[2]->setValueNotifyingHost(0);
+    dexedPluginInstances[4]->getParameters()[2]->setValueNotifyingHost(0);
+    dexedPluginInstances[7]->getParameters()[2]->setValueNotifyingHost(0); 
+
 }
 
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -160,13 +168,6 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     // Configure the plugin instances to our liking
 
     detune();
-
-    // Set volume of some plugin instances to 0;
-    // 8 instances playing in unison is too much
-    dexedPluginInstances[2]->getParameters()[2]->setValueNotifyingHost(0);
-    dexedPluginInstances[3]->getParameters()[2]->setValueNotifyingHost(0);
-    dexedPluginInstances[4]->getParameters()[2]->setValueNotifyingHost(0);
-    dexedPluginInstances[7]->getParameters()[2]->setValueNotifyingHost(0);   
     
     for (int i = 0; i < dexedPluginInstances[0]->getParameters().size(); i++) {
         // Print the names of the parameters and their values
