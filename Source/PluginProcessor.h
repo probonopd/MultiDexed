@@ -61,7 +61,7 @@ public:
 
     const int numberOfInstances = 9;
 
-    bool shouldSetStateInformation = true;
+    bool shouldSynchronize = true;
 
     // Make an array that can hold numberOfInstances juce::AudioProcessor instances
     std::array<std::unique_ptr<juce::AudioProcessor>, 9> dexedPluginInstances;
@@ -72,6 +72,9 @@ public:
     // Because we inherit from juce::AudioProcessorParameter::Listener, we need to implement these methods
     void parameterValueChanged(int parameterIndex, float newValue) override;
     void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
+
+    // Method to detune the plugin instances
+    void detune();
 
 private:
     //==============================================================================

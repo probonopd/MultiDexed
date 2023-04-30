@@ -101,6 +101,16 @@ PluginAudioProcessor::~PluginAudioProcessor()
     }
 }
 
+void PluginAudioProcessor::detune()
+{
+    // Detune the plugin instances in the range between 0.4 and 0.6
+    for (int i = 1; i < numberOfInstances; i++) {
+        float range = 0.6 - 0.4;
+        float detune = 0.4 + i * range/numberOfInstances;
+        dexedPluginInstances[i]->setParameterNotifyingHost(3, detune);
+    }
+}
+
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     int maximumExpectedSamplesPerBlock = samplesPerBlock;
@@ -149,12 +159,7 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     // Configure the plugin instances to our liking
 
-    // Detune the plugin instances in the range between 0.4 and 0.6
-    for (int i = 1; i < numberOfInstances; i++) {
-        float range = 0.6 - 0.4;
-        float detune = 0.4 + i * range/numberOfInstances;
-        dexedPluginInstances[i]->setParameterNotifyingHost(3, detune);
-    }
+    detune();
 
     // Set volume of some plugin instances to 0;
     // 8 instances playing in unison is too much
@@ -246,9 +251,9 @@ void PluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData) {
 void PluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes) { 
     // Set state of instance 0, but prevent infinite loop
     if (dexedPluginInstances[0] != nullptr) {
-        shouldSetStateInformation = false;
+        shouldSynchronize = false;
         return dexedPluginInstances[0]->setStateInformation(data, sizeInBytes);
-        shouldSetStateInformation = true;
+        shouldSynchronize = true;
     }
 }
 
@@ -348,9 +353,28 @@ void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newVa
 
     // Update the value of the parameter in all other plugin instances
     for (int i = 1; i < numberOfInstances; i++) {
-        juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
-        parameter->setValueNotifyingHost(newValue);
+        if (shouldSynchronize) {
+            juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
+            parameter->setValueNotifyingHost(newValue);
+        }
         // FIXME: Why does the above work for some parameters but not others (e.g. "OP1 F COARSE")?
+    }
+
+    // When a cartridge is loaded, update the parameters of all instances
+    // TODO: Find a better trigger for this, e.g. when the user clicks "Load Cartridge"
+    if (parameterIndex == 2236) {
+        // Synchronize the plugin state from instance 0 to all other instances
+        // Get the state of instance 0
+        juce::MemoryBlock state;
+        dexedPluginInstances[0]->getStateInformation(state);
+        for (int i = 1; i < numberOfInstances; i++) {
+            dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
+        }
+        detune();
+        // if (shouldSetStateInformation) {
+        //     // Save the state of instance 0 to the host
+        //     setStateInformation(state.getData(), state.getSize());
+        // }
     }
 }
 
