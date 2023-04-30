@@ -249,10 +249,13 @@ void PluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData) {
 }
 
 void PluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes) { 
-    // Set state of instance 0, but prevent infinite loop
+    // Set state of all instances, but prevent infinite loop
     if (dexedPluginInstances[0] != nullptr) {
         shouldSynchronize = false;
-        return dexedPluginInstances[0]->setStateInformation(data, sizeInBytes);
+        for (int i = 0; i < numberOfInstances; i++) {
+            dexedPluginInstances[i]->setStateInformation(data, sizeInBytes);
+        }
+        detune();
         shouldSynchronize = true;
     }
 }
