@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 
+
 //==============================================================================
 /**
  */
@@ -76,7 +77,14 @@ public:
     // Method to detune the plugin instances
     void detune();
 
+    juce::AudioProcessorValueTreeState parameters;
+
 private:
     //==============================================================================
+    juce::AudioParameterFloat* detuneSpread;
+    
+    // Declare parameterListener to be a juce::AudioProcessorParameter::Listener
+    juce::AudioProcessorParameter::Listener* parameterListener;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessor)
 };

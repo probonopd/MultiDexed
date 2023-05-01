@@ -4,7 +4,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
-
 // Build on FreeBSD with:
 // sed -i '' -e 's|stat64|stat|g'  make_helpers/juce_SimpleBinaryBuilder.cpp
 // gmake CONFIG=Release
@@ -12,7 +11,8 @@
 // gmake CONFIG=Debug
 
 PluginAudioProcessor::PluginAudioProcessor()
-    : juce::AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true))
+    : parameters(*this, nullptr),
+    juce::AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
     juce::OwnedArray<juce::PluginDescription> pluginDescriptions;
     juce::KnownPluginList pluginList;
@@ -22,6 +22,21 @@ PluginAudioProcessor::PluginAudioProcessor()
     pluginFormatManager.addFormat(vst3);
 
     juce::String pluginPath;
+
+    // Add a parameter to the parameters object
+    // https://docs.juce.com/master/tutorial_audio_parameter.html
+    addParameter (detuneSpread = new juce::AudioParameterFloat ("detuneSpread", // parameterID
+                                                        "Detune Spread", // parameter name
+                                                        0.0f,   // minimum value
+                                                        0.4f,   // maximum value
+                                                        0.2f)); // default value
+
+    // detuneSpread->addListener(&parameterListener);
+    detuneSpread->addListener(this);
+    // FIXME: The same callback is used for the detuneSpread parameter and the
+    // parameters of the Dexed plugin instances.
+    // Trying to define a separate listener (not "this") sent me down the C++ rabbit hole
+    // so we are using "this" for now.
 
     // Check which operating system we are running on
     // and set the plugin path accordingly
@@ -103,10 +118,12 @@ PluginAudioProcessor::~PluginAudioProcessor()
 
 void PluginAudioProcessor::detune()
 {
-    // Detune the plugin instances in the range between 0.4 and 0.6
+    // Detune the plugin instances in the range determined by the detuneSpread parameter
+    float range = detuneSpread->get();
+    std::cout << "Using Detune Spread: " << range << std::endl;
     for (int i = 1; i < numberOfInstances; i++) {
-        float range = 0.6 - 0.4;
-        float detune = 0.4 + i * range/numberOfInstances;
+        float detune = 0.5 - range/2.0 + i * range/numberOfInstances;
+        std::cout << "Setting instance " << i << " to detune " << detune << std::endl;
         dexedPluginInstances[i]->getParameters()[3]->setValueNotifyingHost(detune);
     }
 
@@ -176,10 +193,9 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
         // }
         // Add listener to each parameter
         juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[i];
-        parameter->addListener(this);
-    
-    }   
-     
+        parameter->addListener(this);   
+    }
+  
 }
 
 void PluginAudioProcessor::releaseResources()
@@ -352,41 +368,53 @@ bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) co
 }
 
 // Because we inherit from AudioProcessorValueTreeState::Listener, we need to implement this method
-void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newValue)
+void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newValue) // We can't know which set of parameters the index refers to; FIXME
 {
+
     // Get the parameter that changed
     juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[parameterIndex];
     // Get the name of the parameter
     juce::String parameterName = parameter->getName(100);
 
-    std::cout << "Parameter " << parameterIndex << ": " << parameterName.toStdString() << " = " << newValue << std::endl;
-
-    // Update the value of the parameter in all other plugin instances
-    for (int i = 1; i < numberOfInstances; i++) {
-        if (shouldSynchronize) {
-            juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
-            parameter->setValueNotifyingHost(newValue);
-        }
-        // FIXME: Why does the above work for some parameters but not others (e.g. "OP1 F COARSE")?
-    }
-
-    // When a cartridge is loaded, update the parameters of all instances
-    // TODO: Find a better trigger for this, e.g. when the user clicks "Load Cartridge"
-    if (parameterIndex == 2236) {
-        // Synchronize the plugin state from instance 0 to all other instances
-        // Get the state of instance 0
-        juce::MemoryBlock state;
-        dexedPluginInstances[0]->getStateInformation(state);
-        for (int i = 1; i < numberOfInstances; i++) {
-            dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
-        }
+    // We cannot distinguish between changes in the plugin instance and changes in the host,
+    // so for now we just call detune() whenever the parameter changes, even if the user
+    // changed the parameter with the same index in plugin instance 0 rather than the host
+    if (parameterIndex == detuneSpread->getParameterIndex())
+    {
+        shouldSynchronize = false;
         detune();
-        // Update the names of all programs exposed by the plugin to the host
-        updateHostDisplay(); // TODO: Why does this not work? How can we update the menu containing the progams in the host?
-        // dexedPluginInstances[0]->updateHostDisplay(); // Does not work either
+        shouldSynchronize = true;
+    } else {
 
-        // Change the program to the one selected in instance 0
-        setCurrentProgram(dexedPluginInstances[0]->getCurrentProgram());
+        std::cout << "Parameter " << parameterIndex << ": " << parameterName.toStdString() << " = " << newValue << std::endl;
+
+        // Update the value of the parameter in all other plugin instances
+        for (int i = 1; i < numberOfInstances; i++) {
+            if (shouldSynchronize) {
+                juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
+                parameter->setValueNotifyingHost(newValue);
+            }
+            // FIXME: Why does the above work for some parameters but not others (e.g. "OP1 F COARSE")?
+        }
+
+        // When a cartridge is loaded, update the parameters of all instances
+        // TODO: Find a better trigger for this, e.g. when the user clicks "Load Cartridge"
+        if (parameterIndex == 2236) {
+            // Synchronize the plugin state from instance 0 to all other instances
+            // Get the state of instance 0
+            juce::MemoryBlock state;
+            dexedPluginInstances[0]->getStateInformation(state);
+            for (int i = 1; i < numberOfInstances; i++) {
+                dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
+            }
+            detune();
+            // Update the names of all programs exposed by the plugin to the host
+            updateHostDisplay(); // TODO: Why does this not work? How can we update the menu containing the progams in the host?
+            // dexedPluginInstances[0]->updateHostDisplay(); // Does not work either
+
+            // Change the program to the one selected in instance 0
+            setCurrentProgram(dexedPluginInstances[0]->getCurrentProgram());
+        }
     }
 }
 
