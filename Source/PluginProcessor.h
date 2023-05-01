@@ -82,6 +82,7 @@ public:
 private:
     //==============================================================================
     juce::AudioParameterFloat* detuneSpread;
+    juce::AudioParameterFloat* panSpread;
     
     // Declare parameterListener to be a juce::AudioProcessorParameter::Listener
     juce::AudioProcessorParameter::Listener* parameterListener;

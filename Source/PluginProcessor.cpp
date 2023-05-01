@@ -28,15 +28,19 @@ PluginAudioProcessor::PluginAudioProcessor()
     addParameter (detuneSpread = new juce::AudioParameterFloat ("detuneSpread", // parameterID
                                                         "Detune Spread", // parameter name
                                                         0.0f,   // minimum value
-                                                        0.4f,   // maximum value
+                                                        0.5f,   // maximum value
                                                         0.2f)); // default value
-
-    // detuneSpread->addListener(&parameterListener);
     detuneSpread->addListener(this);
     // FIXME: The same callback is used for the detuneSpread parameter and the
     // parameters of the Dexed plugin instances.
     // Trying to define a separate listener (not "this") sent me down the C++ rabbit hole
     // so we are using "this" for now.
+
+    addParameter (panSpread = new juce::AudioParameterFloat ("panSpread", // parameterID
+                                                    "Pan Spread", // parameter name
+                                                    0.0f,   // minimum value
+                                                    1.0f,   // maximum value
+                                                    1.0f)); // default value
 
     // Check which operating system we are running on
     // and set the plugin path accordingly
@@ -226,24 +230,69 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
     }
 
+                // TODO: If we don't want artifacts when panSpread is automated,
+                // we need to make sure that the panSpread value gets smoothed between its old and new value?
+                float panAmountFactor = panSpread->get();
+
+
+                
+
     // Combine the sound of all the plugin instances
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
             float sum = 0;
             int i;
             for (i = 1; i < numberOfInstances; i++) {
-                sum += dexedPluginBuffers[i].getSample(channel, sample);
-                // Pan instances; instance 1 is full left, 2 a bit less left, ... , last instance is full right
-                float pan = (float)i / (numberOfInstances - 3);
+                // if numberOfInstances is 9, pan for instance 1 is 0.0, for instance 2 is 0.14, for instance 3 is 0.28, for instance 4 is 0.42, for instance 5 is 0.57, for instance 6 is 0.71, for instance 7 is 0.85, for instance 8 is 1.0
+                // if numberOfInstances is 8, pan for instance 1 is 0.0, for instance 2 is 0.17, for instance 3 is 0.33, for instance 4 is 0.5, for instance 5 is 0.67, for instance 6 is 0.83, for instance 7 is 1.0
+                // if numberOfInstances is 7, pan for instance 1 is 0.0, for instance 2 is 0.2, for instance 3 is 0.4, for instance 4 is 0.6, for instance 5 is 0.8, for instance 6 is 1.0
+                // if numberOfInstances is 6, pan for instance 1 is 0.0, for instance 2 is 0.25, for instance 3 is 0.5, for instance 4 is 0.75, for instance 5 is 1.0
+                // if numberOfInstances is 5, pan for instance 1 is 0.0, for instance 2 is 0.33, for instance 3 is 0.66, for instance 4 is 1.0
+                // if numberOfInstances is 4, pan for instance 1 is 0.0, for instance 2 is 0.5, for instance 3 is 1.0
+                // if numberOfInstances is 3, pan for instance 1 is 0.0, for instance 2 is 1.0
+                // if numberOfInstances is 2, pan for instance 1 is 0.0
+                // if numberOfInstances is 1, pan for instance 1 is 0.0
+                // Considering the above, the pan for instance i is (i-1)/(numberOfInstances-1)
+                float pan = (i-1.0)/(numberOfInstances-1.0);
+                
+                // if (channel == 0) {
+                //     // Left channel
+                //     sum += dexedPluginBuffers[i].getSample(channel, sample) * (1.0 - pan);
+                // }
+                // else {
+                //     // Right channel
+                //     sum += dexedPluginBuffers[i].getSample(channel, sample) * pan;
+                // }
+
+                // Do the same but don't apply panning fully, only apply it by panSpread %
+
+
+
+                // if (channel == 0) {
+                //     // Left channel
+                //     sum += dexedPluginBuffers[i].getSample(channel, sample) * (1.0 - panAmountFactor * pan);
+                // }
+                // else {
+                //     // Right channel
+                //     sum += dexedPluginBuffers[i].getSample(channel, sample) * (panAmountFactor * pan + (1.0 - panAmountFactor));
+                // }
+
+                // Normalization factor, taking into account the number of unmuted instances and the pan amount factor
+                float normalizationFactor = 1.0 / (numberOfUnmutedInstances * (1.0 - panAmountFactor * pan) + numberOfUnmutedInstances * (panAmountFactor * pan + (1.0 - panAmountFactor)));
+
+                // Do the above but also apply normalization
                 if (channel == 0) {
-                    sum += dexedPluginBuffers[i].getSample(channel, sample) * (1 - pan);
+                    // Left channel
+                    sum += dexedPluginBuffers[i].getSample(channel, sample) * (1.0 - panAmountFactor * pan) * normalizationFactor;
                 }
                 else {
-                    sum += dexedPluginBuffers[i].getSample(channel, sample) * pan;
+                    // Right channel
+                    sum += dexedPluginBuffers[i].getSample(channel, sample) * (panAmountFactor * pan + (1.0 - panAmountFactor)) * normalizationFactor;
                 }
             }
 
-            buffer.setSample(channel, sample, sum / numberOfUnmutedInstances);
+            // buffer.setSample(channel, sample, sum / numberOfUnmutedInstances);
+            buffer.setSample(channel, sample, sum);
 
         }
     }
