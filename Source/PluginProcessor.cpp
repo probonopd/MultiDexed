@@ -381,10 +381,12 @@ void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newVa
             dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
         }
         detune();
-        // if (shouldSetStateInformation) {
-        //     // Save the state of instance 0 to the host
-        //     setStateInformation(state.getData(), state.getSize());
-        // }
+        // Update the names of all programs exposed by the plugin to the host
+        updateHostDisplay(); // TODO: Why does this not work? How can we update the menu containing the progams in the host?
+        // dexedPluginInstances[0]->updateHostDisplay(); // Does not work either
+
+        // Change the program to the one selected in instance 0
+        setCurrentProgram(dexedPluginInstances[0]->getCurrentProgram());
     }
 }
 
