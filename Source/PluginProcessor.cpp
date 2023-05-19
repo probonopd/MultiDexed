@@ -28,8 +28,8 @@ PluginAudioProcessor::PluginAudioProcessor()
     addParameter (detuneSpread = new juce::AudioParameterFloat ("detuneSpread", // parameterID
                                                         "Detune Spread", // parameter name
                                                         0.0f,   // minimum value
-                                                        0.5f,   // maximum value
-                                                        0.2f)); // default value
+                                                        0.4f,   // maximum value
+                                                        0.1f)); // default value
     detuneSpread->addListener(this);
     // FIXME: The same callback is used for the detuneSpread parameter and the
     // parameters of the Dexed plugin instances.
@@ -122,6 +122,14 @@ PluginAudioProcessor::~PluginAudioProcessor()
 
 void PluginAudioProcessor::detune()
 {
+
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return;
+        }
+    }
+
     // Detune the plugin instances in the range determined by the detuneSpread parameter
     float range = detuneSpread->get();
     std::cout << "Using Detune Spread: " << range << std::endl;
@@ -131,17 +139,17 @@ void PluginAudioProcessor::detune()
         dexedPluginInstances[i]->getParameters()[3]->setValueNotifyingHost(detune);
     }
 
-    // Set volume of some plugin instances to 0;
-    // 8 instances playing in unison is too much
-    dexedPluginInstances[2]->getParameters()[2]->setValueNotifyingHost(0);
-    dexedPluginInstances[3]->getParameters()[2]->setValueNotifyingHost(0);
-    dexedPluginInstances[4]->getParameters()[2]->setValueNotifyingHost(0);
-    dexedPluginInstances[7]->getParameters()[2]->setValueNotifyingHost(0); 
-
 }
 
 void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return;
+        }
+    }
+
     int maximumExpectedSamplesPerBlock = samplesPerBlock;
 
     
@@ -230,12 +238,9 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
     }
 
-                // TODO: If we don't want artifacts when panSpread is automated,
-                // we need to make sure that the panSpread value gets smoothed between its old and new value?
-                float panAmountFactor = panSpread->get();
-
-
-                
+    // TODO: If we don't want artifacts when panSpread is automated,
+    // we need to make sure that the panSpread value gets smoothed between its old and new value?
+    float panAmountFactor = panSpread->get();       
 
     // Combine the sound of all the plugin instances
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
@@ -289,21 +294,34 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                     // Right channel
                     sum += dexedPluginBuffers[i].getSample(channel, sample) * (panAmountFactor * pan + (1.0 - panAmountFactor)) * normalizationFactor;
                 }
+
+                // FIXME: Stereo not centered when panSpread is > 0.0
+                // Something must be wrong because when one increases the spread, the stereo is no longer balanced
+                // Maybe something is not linear?
+                // What do we need to change so that the stereo is balanced when the spread is 0.0 and when the spread is 1.0
+                // and for all values in between?
+
             }
+
+
 
             // buffer.setSample(channel, sample, sum / numberOfUnmutedInstances);
             buffer.setSample(channel, sample, sum);
 
         }
     }
-
-
-    // 
-
 }
 
 juce::AudioProcessorEditor *PluginAudioProcessor::createEditor()
 {
+
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return nullptr;
+        }
+    }
+
     return new PluginAudioProcessorEditor(*this);
 }
 
@@ -387,16 +405,37 @@ int PluginAudioProcessor::getCurrentProgram()
 // setCurrentProgram() is called when the user changes the program in the host
 void PluginAudioProcessor::setCurrentProgram(int index)
 {
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return;
+        }
+    }
+
     // Update the program in instance 0, the other instances will follow
     dexedPluginInstances[0]->setCurrentProgram(index);
 }
 
 const juce::String PluginAudioProcessor::getProgramName(int index)
 {
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return "";
+        }
+    }
+
     return dexedPluginInstances[0]->getProgramName(index);
 }
 
 void PluginAudioProcessor::changeProgramName(int index, const juce::String &newName) {
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return;
+        }
+    }
+
     dexedPluginInstances[0]->changeProgramName(index, newName);
 }
 
@@ -413,13 +452,26 @@ bool PluginAudioProcessor::hasEditor() const
 
 bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return false;
+        }
+    }
+
     return (layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo());
 }
 
 // Because we inherit from AudioProcessorValueTreeState::Listener, we need to implement this method
 void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newValue) // We can't know which set of parameters the index refers to; FIXME
 {
-
+    // Return if any of the plugin instances are null
+    for (int i = 0; i < numberOfInstances; i++) {
+        if (dexedPluginInstances[i] == nullptr) {
+            return;
+        }
+    }
+    
     // Get the parameter that changed
     juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[parameterIndex];
     // Get the name of the parameter
