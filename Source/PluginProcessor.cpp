@@ -229,7 +229,8 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             numberOfUnmutedInstances++;
         }
     }
-    for (int i = 1; i < numberOfInstances; i++) {
+    for (int i = 0; i < numberOfInstances; i++) {
+        // NOTE: Even though we don't use the sound of plugin instance 0, we still need to process it for the GUI to work
         // Make empty initialized buffer for each plugin instance in dexedPluginBuffers
         dexedPluginBuffers[i] = juce::AudioBuffer<float>(buffer.getNumChannels(), buffer.getNumSamples());
         // Process the audio through each plugin instance
