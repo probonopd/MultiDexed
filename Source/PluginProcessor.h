@@ -79,11 +79,11 @@ public:
 
     juce::AudioProcessorValueTreeState parameters;
 
-private:
-    //==============================================================================
     juce::AudioParameterFloat* detuneSpread;
     juce::AudioParameterFloat* panSpread;
-    
+
+private:
+    //==============================================================================
     // Declare parameterListener to be a juce::AudioProcessorParameter::Listener
     juce::AudioProcessorParameter::Listener* parameterListener;
 
