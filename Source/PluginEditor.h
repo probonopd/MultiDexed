@@ -14,7 +14,7 @@
 //==============================================================================
 /**
 */
-class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Slider::Listener
+class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Slider::Listener, public juce::Button::Listener
 {
 public:
     PluginAudioProcessorEditor (PluginAudioProcessor&);
@@ -26,19 +26,21 @@ public:
 
     void sliderValueChanged(juce::Slider* slider) override;
 
+    void buttonClicked(juce::Button* button) override;
+
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     PluginAudioProcessor& audioProcessor;
 
     // Pointer to our button
-    juce::TextButton* button;
+    juce::TextButton button;
 
     // Pointer to our tabbed component
     std::unique_ptr<juce::TabbedComponent> tabbedComponent;
 
-    // Array with 8 pointers to our Dexed components
-    std::unique_ptr<juce::Component> dexedComponents[8];
+    // Array with 8 pointers to our Dexed windows
+    std::unique_ptr<juce::DocumentWindow> dexedWindows[8];
 
     // Array with 8 pointers to our Dexed editors
     juce::AudioProcessorEditor* dexedEditors[8];
