@@ -16,8 +16,11 @@ __This is work in progress.__ Any help is greatly appreciated.
 - [x] Make the instances produce sound (thanks [__@getdunne__](https://github.com/getdunne))
 - [x] Each instance is slightly detuned
 - [x] Each instance is stereo shifted (panned)
-- [ ] Add GUI for selecting number of instances, amount of detune, and amount of panning
+- [x] Add GUI for selecting amount of detune, and amount of stereo panning
+- [ ] Add GUI for selecting number of instances
 - [ ] Save and restore plugin state
 - [ ] Make it build for Linux on Raspberry Pi (aarch64)
 - [ ] Make it build on CirrusCI for FreeBSD
 - [ ] Stretch goal: Make it read, write, and use [MiniDexed](https://github.com/probonopd/MultiDexed) performance files and/or TX816, TX802 performances
+
+__NOTE:__ A Dexed version newer than 0.9.6 needs to be installed (e.g., the NIGHTLY version from the Dexed GitHub page). Dexed 0.9.6 and earlier are based on JUCE 6 which seemingly leads to crashes when being hosted in the MultiDexed vst3.
