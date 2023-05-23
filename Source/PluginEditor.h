@@ -14,7 +14,7 @@
 //==============================================================================
 /**
 */
-class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Button::Listener
+class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
     PluginAudioProcessorEditor (PluginAudioProcessor&);
@@ -23,8 +23,6 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-
-    void buttonClicked(juce::Button* button) override;
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -37,8 +35,8 @@ private:
     // Pointer to our tabbed component
     std::unique_ptr<juce::TabbedComponent> tabbedComponent;
 
-    // Array with 8 pointers to our Dexed windows
-    std::unique_ptr<juce::DocumentWindow> dexedWindows[8];
+    // Array with 8 pointers to our Dexed components
+    std::unique_ptr<juce::Component> dexedComponents[8];
 
     // Array with 8 pointers to our Dexed editors
     juce::AudioProcessorEditor* dexedEditors[8];

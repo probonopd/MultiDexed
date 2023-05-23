@@ -198,16 +198,16 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     apvts.addParameterListener("panSpread", this);
 
     // Add apvts listener for all parameters to update the other instances when they change
-    for (int i = 0; i < getParameters().size(); i++) {
-        juce::AudioProcessorParameter* parameter = getParameters()[i];
-        apvts.addParameterListener(parameter->getName(0), this);
-    }
+    // for (int i = 0; i < getParameters().size(); i++) {
+    //     juce::AudioProcessorParameter* parameter = getParameters()[i];
+    //     apvts.addParameterListener(parameter->getName(0), this);
+    // }
 
     // Add aptvs listener for all parameters in instance 0 in order to update the other instances when they change
-    for (int i = 0; i < dexedPluginInstances[0]->getParameters().size(); i++) {
-        juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[i];
-        apvts.addParameterListener(parameter->getName(0), this);
-    }
+    // for (int i = 0; i < dexedPluginInstances[0]->getParameters().size(); i++) {
+    //     juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[i];
+    //     apvts.addParameterListener(parameter->getName(0), this);
+    // }
   
 }
 
