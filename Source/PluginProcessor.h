@@ -15,7 +15,8 @@
 /**
  */
 class PluginAudioProcessor : public juce::AudioProcessor,
-                             juce::AudioProcessorParameter::Listener
+                             juce::AudioProcessorParameter::Listener,
+                             juce::AudioProcessorValueTreeState::Listener
                              // https://www.youtube.com/watch?v=Bw_OkHNpj1M&t=1990s
 #if JucePlugin_Enable_ARA
     ,
@@ -70,6 +71,9 @@ public:
     // Buffers for the plugin instances
     std::array<juce::AudioBuffer<float>, 5> dexedPluginBuffers;
 
+    // Because we inherit from juce::AudioProcessorValueTreeState::Listener, we need to implement this method
+    void parameterChanged(const juce::String &parameterID, float newValue) override;
+
     // Because we inherit from juce::AudioProcessorParameter::Listener, we need to implement these methods
     void parameterValueChanged(int parameterIndex, float newValue) override;
     void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
@@ -77,15 +81,12 @@ public:
     // Method to detune the plugin instances
     void detune();
 
-    juce::AudioProcessorValueTreeState parameters;
-
-    juce::AudioParameterFloat* detuneSpread;
-    juce::AudioParameterFloat* panSpread;
+    juce::AudioProcessorValueTreeState apvts;
 
 private:
     //==============================================================================
     // Declare parameterListener to be a juce::AudioProcessorParameter::Listener
-    juce::AudioProcessorParameter::Listener* parameterListener;
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessor)
 };

@@ -14,7 +14,7 @@
 //==============================================================================
 /**
 */
-class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Slider::Listener, public juce::Button::Listener
+class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Button::Listener
 {
 public:
     PluginAudioProcessorEditor (PluginAudioProcessor&);
@@ -23,8 +23,6 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-
-    void sliderValueChanged(juce::Slider* slider) override;
 
     void buttonClicked(juce::Button* button) override;
 
@@ -49,6 +47,10 @@ private:
     juce::Slider detuneSlider;
     juce::Slider panSlider;
 
+    // Attach the sliders to the parameters
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> detuneSliderAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> panSliderAttachment;
+    
     // Labels for the sliders
     juce::Label detuneLabel;
     juce::Label panLabel;

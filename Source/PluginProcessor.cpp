@@ -11,7 +11,8 @@
 // gmake CONFIG=Debug
 
 PluginAudioProcessor::PluginAudioProcessor()
-    : parameters(*this, nullptr),
+    : apvts(*this, nullptr, "Parameters", createParameterLayout()),
+      // juce::AudioProcessor(BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), true)
     juce::AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
     juce::OwnedArray<juce::PluginDescription> pluginDescriptions;
@@ -22,25 +23,6 @@ PluginAudioProcessor::PluginAudioProcessor()
     pluginFormatManager.addFormat(vst3);
 
     juce::String pluginPath;
-
-    // Add a parameter to the parameters object
-    // https://docs.juce.com/master/tutorial_audio_parameter.html
-    addParameter (detuneSpread = new juce::AudioParameterFloat ("detuneSpread", // parameterID
-                                                        "Detune Spread", // parameter name
-                                                        0.0f,   // minimum value
-                                                        0.4f,   // maximum value
-                                                        0.1f)); // default value
-    detuneSpread->addListener(this);
-    // FIXME: The same callback is used for the detuneSpread parameter and the
-    // parameters of the Dexed plugin instances.
-    // Trying to define a separate listener (not "this") sent me down the C++ rabbit hole
-    // so we are using "this" for now.
-
-    addParameter (panSpread = new juce::AudioParameterFloat ("panSpread", // parameterID
-                                                    "Pan Spread", // parameter name
-                                                    0.0f,   // minimum value
-                                                    1.0f,   // maximum value
-                                                    1.0f)); // default value
 
     // Check which operating system we are running on
     // and set the plugin path accordingly
@@ -131,7 +113,7 @@ void PluginAudioProcessor::detune()
     }
 
     // Detune the plugin instances in the range determined by the detuneSpread parameter
-    float range = detuneSpread->get();
+    float range = apvts.getRawParameterValue("detuneSpread")->load();
     std::cout << "Using Detune Spread: " << range << std::endl;
     for (int i = 1; i < numberOfInstances; i++) {
         float detune = 0.5 - range/2.0 + i * range/numberOfInstances;
@@ -205,7 +187,26 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
         // }
         // Add listener to each parameter
         juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[i];
+        
         parameter->addListener(this);   
+    }
+
+    // Add apvts listener for detuneSpread in order to call detune() when it changes
+    apvts.addParameterListener("detuneSpread", this);
+
+    // Add apvts listener for panSpread in order to print a message when it changes
+    apvts.addParameterListener("panSpread", this);
+
+    // Add apvts listener for all parameters to update the other instances when they change
+    for (int i = 0; i < getParameters().size(); i++) {
+        juce::AudioProcessorParameter* parameter = getParameters()[i];
+        apvts.addParameterListener(parameter->getName(0), this);
+    }
+
+    // Add aptvs listener for all parameters in instance 0 in order to update the other instances when they change
+    for (int i = 0; i < dexedPluginInstances[0]->getParameters().size(); i++) {
+        juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[i];
+        apvts.addParameterListener(parameter->getName(0), this);
     }
   
 }
@@ -241,8 +242,8 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // TODO: If we don't want artifacts when panSpread is automated,
     // we need to make sure that the panSpread value gets smoothed between its old and new value?
-    float panAmountFactor = panSpread->get();       
-
+    float panAmountFactor = apvts.getRawParameterValue("panSpread")->load();
+    // std::cout << "Using Pan Spread: " << panAmountFactor << std::endl;
     // Combine the sound of all the plugin instances
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
@@ -463,7 +464,19 @@ bool PluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) co
     return (layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo());
 }
 
-// Because we inherit from AudioProcessorValueTreeState::Listener, we need to implement this method
+// // Because we inherit from juce::AudioProcessorValueTreeState::Listener, we need to implement this method
+void PluginAudioProcessor::parameterChanged(const juce::String &parameterID, float newValue)
+{
+    DBG("parameterChanged() called with parameterID = " + parameterID + " and newValue = " + juce::String(newValue));
+    // If the parameterID is "detuneSpread", then we need to call detune()
+    if (parameterID == "detuneSpread") {
+        shouldSynchronize = false;
+        detune();
+        shouldSynchronize = true;
+    }
+}	
+
+// Because we inherit from juce::AudioProcessorParameter::Listener, we need to implement this method
 void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newValue) // We can't know which set of parameters the index refers to; FIXME
 {
     // Return if any of the plugin instances are null
@@ -481,47 +494,55 @@ void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newVa
     // We cannot distinguish between changes in the plugin instance and changes in the host,
     // so for now we just call detune() whenever the parameter changes, even if the user
     // changed the parameter with the same index in plugin instance 0 rather than the host
-    if (parameterIndex == detuneSpread->getParameterIndex())
-    {
-        shouldSynchronize = false;
-        detune();
-        shouldSynchronize = true;
-    } else {
 
-        std::cout << "Parameter " << parameterIndex << ": " << parameterName.toStdString() << " = " << newValue << std::endl;
+    std::cout << "Parameter " << parameterIndex << ": " << parameterName.toStdString() << " = " << newValue << std::endl;
 
-        // Update the value of the parameter in all other plugin instances
+    // Update the value of the parameter in all other plugin instances
+    for (int i = 1; i < numberOfInstances; i++) {
+        if (shouldSynchronize) {
+            juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
+            parameter->setValueNotifyingHost(newValue);
+        }
+        // FIXME: Why does the above work for some parameters but not others (e.g. "OP1 F COARSE")?
+    }
+
+    // When a cartridge is loaded, update the parameters of all instances
+    // TODO: Find a better trigger for this, e.g. when the user clicks "Load Cartridge"
+    if (parameterIndex == 2236) {
+        // Synchronize the plugin state from instance 0 to all other instances
+        // Get the state of instance 0
+        juce::MemoryBlock state;
+        dexedPluginInstances[0]->getStateInformation(state);
         for (int i = 1; i < numberOfInstances; i++) {
-            if (shouldSynchronize) {
-                juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
-                parameter->setValueNotifyingHost(newValue);
-            }
-            // FIXME: Why does the above work for some parameters but not others (e.g. "OP1 F COARSE")?
+            dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
         }
+        detune();
+        // Update the names of all programs exposed by the plugin to the host
+        updateHostDisplay(); // TODO: Why does this not work? How can we update the menu containing the progams in the host?
+        // dexedPluginInstances[0]->updateHostDisplay(); // Does not work either
 
-        // When a cartridge is loaded, update the parameters of all instances
-        // TODO: Find a better trigger for this, e.g. when the user clicks "Load Cartridge"
-        if (parameterIndex == 2236) {
-            // Synchronize the plugin state from instance 0 to all other instances
-            // Get the state of instance 0
-            juce::MemoryBlock state;
-            dexedPluginInstances[0]->getStateInformation(state);
-            for (int i = 1; i < numberOfInstances; i++) {
-                dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
-            }
-            detune();
-            // Update the names of all programs exposed by the plugin to the host
-            updateHostDisplay(); // TODO: Why does this not work? How can we update the menu containing the progams in the host?
-            // dexedPluginInstances[0]->updateHostDisplay(); // Does not work either
-
-            // Change the program to the one selected in instance 0
-            setCurrentProgram(dexedPluginInstances[0]->getCurrentProgram());
-        }
+        // Change the program to the one selected in instance 0
+        setCurrentProgram(dexedPluginInstances[0]->getCurrentProgram());
     }
 }
 
-// Because we inherit from AudioProcessorValueTreeState::Listener, we need to implement this method
+// Because we inherit from juce::AudioProcessorParameter::Listener, we need to implement this method
 void PluginAudioProcessor::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
 {
     // Not used
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout PluginAudioProcessor::createParameterLayout(){
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> parameters;
+    parameters.push_back(std::make_unique<juce::AudioParameterFloat>("detuneSpread", // parameterID
+                                                        "Detune Spread", // parameter name
+                                                        0.0f,   // minimum value
+                                                        0.4f,   // maximum value
+                                                        0.1f)); // default value
+    parameters.push_back(std::make_unique<juce::AudioParameterFloat>("panSpread", // parameterID
+                                                        "Pan Spread", // parameter name
+                                                        0.0f,   // minimum value
+                                                        1.0f,   // maximum value
+                                                        1.0f)); // default value
+   return { parameters.begin(), parameters.end() };               
 }
