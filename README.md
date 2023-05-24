@@ -2,7 +2,7 @@
 
 ![MultiDexed](https://user-images.githubusercontent.com/2480569/222845457-eff2f74f-9699-4c49-bbec-8e7f58b7d14b.jpg)
 
-MultiDexed is a standalone application and a VST plugin for Windows, macOS, and Linux that runs multiple instances of [Dexed](https://github.com/asb2m10/dexed) to create the unison effect explained [here](https://www.youtube.com/watch?v=Hzwvd8aZUUU) and showcased [here](https://www.youtube.com/watch?v=BjxuzeVXCDU&t=1190s) by Anders Enger Jensen.
+MultiDexed is a standalone application and a VST plugin for Windows, macOS, and Linux that runs multiple instances of [Dexed](https://github.com/asb2m10/dexed) to create the unison effect explained [here](https://www.youtube.com/watch?v=Hzwvd8aZUUU) and showcased [here](https://youtu.be/TutoLkJ_bks?t=718) by Anders Enger Jensen.
 
 The instances can be detuned and stereo panned.
 
