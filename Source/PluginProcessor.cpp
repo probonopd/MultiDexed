@@ -116,7 +116,7 @@ void PluginAudioProcessor::detune()
     float range = apvts.getRawParameterValue("detuneSpread")->load();
     std::cout << "Using Detune Spread: " << range << std::endl;
     for (int i = 1; i < numberOfInstances; i++) {
-        float detune = 0.5 - range/2.0 + i * range/numberOfInstances;
+        double detune = 0.5 - range/2.0 + i * range/numberOfInstances;
         std::cout << "Setting instance " << i << " to detune " << detune << std::endl;
         dexedPluginInstances[i]->getParameters()[3]->setValueNotifyingHost(detune);
     }
@@ -173,7 +173,7 @@ void PluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     juce::MemoryBlock state;
     dexedPluginInstances[0]->getStateInformation(state);
     for (int i = 1; i < numberOfInstances; i++) {
-        dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
+        dexedPluginInstances[i]->setStateInformation(state.getData(), static_cast<size_t>(state.getSize()));
     }
 
     // Configure the plugin instances to our liking
@@ -247,7 +247,7 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // Combine the sound of all the plugin instances
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            float sum = 0;
+            double sum = 0;
             int i;
             for (i = 1; i < numberOfInstances; i++) {
                 // if numberOfInstances is 9, pan for instance 1 is 0.0, for instance 2 is 0.14, for instance 3 is 0.28, for instance 4 is 0.42, for instance 5 is 0.57, for instance 6 is 0.71, for instance 7 is 0.85, for instance 8 is 1.0
@@ -260,7 +260,7 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                 // if numberOfInstances is 2, pan for instance 1 is 0.0
                 // if numberOfInstances is 1, pan for instance 1 is 0.0
                 // Considering the above, the pan for instance i is (i-1)/(numberOfInstances-1)
-                float pan = (i-1.0)/(numberOfInstances-1.0);
+                double pan = (i-1.0)/(numberOfInstances-1.0);
                 
                 // if (channel == 0) {
                 //     // Left channel
@@ -285,7 +285,7 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                 // }
 
                 // Normalization factor, taking into account the number of unmuted instances and the pan amount factor
-                float normalizationFactor = 1.0 / (numberOfUnmutedInstances * (1.0 - panAmountFactor * pan) + numberOfUnmutedInstances * (panAmountFactor * pan + (1.0 - panAmountFactor)));
+                double normalizationFactor = 1.0 / (numberOfUnmutedInstances * (1.0 - panAmountFactor * pan) + numberOfUnmutedInstances * (panAmountFactor * pan + (1.0 - panAmountFactor)));
 
                 // Do the above but also apply normalization
                 if (channel == 0) {
@@ -307,7 +307,7 @@ void PluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
 
 
-            // buffer.setSample(channel, sample, sum / numberOfUnmutedInstances);
+            // buffer.setSample(channel, sample, sum / numberOfUnmutedstances);
             buffer.setSample(channel, sample, sum);
 
         }
@@ -530,7 +530,7 @@ void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newVa
         juce::MemoryBlock state;
         dexedPluginInstances[0]->getStateInformation(state);
         for (int i = 1; i < numberOfInstances; i++) {
-            dexedPluginInstances[i]->setStateInformation(state.getData(), state.getSize());
+            dexedPluginInstances[i]->setStateInformation(state.getData(), static_cast<size_t>(state.getSize()));
         }
         detune();
         // Update the names of all programs exposed by the plugin to the host
