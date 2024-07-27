@@ -15,6 +15,9 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
 {
     // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
     auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
+    if (!pluginAudioProcessor) {
+        return;
+    }
 
     // Create a tabbed component
     tabbedComponent = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
@@ -60,25 +63,32 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     addAndMakeVisible(panLabel);
     panLabel.setText("Pan", juce::dontSendNotification);
     panLabel.attachToComponent(&panSlider, false);
-
-}
+}   
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    // Clean up Dexed components and detach slider attachments
-    for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
-        if (dexedComponents[i]) {
-            // Remove the Dexed editor from the dexedComponents[i] component
-            dexedComponents[i]->removeAllChildren();
-        }
-        dexedEditors[i] = nullptr;
-        dexedComponents[i] = nullptr;
+
+    // Remove all tabs from the tabbed component
+    if (tabbedComponent) {
+        tabbedComponent->clearTabs();
     }
 
-    // Remove the tabbed component from the editor
+     // Clean up Dexed components and detach slider attachments
+    if (!dexedComponents.empty() && !dexedEditors.empty()) {
+        for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
+            if (dexedComponents[i]) {
+                dexedComponents[i]->removeAllChildren();
+            }
+            dexedEditors.clear();
+            dexedEditors[i] = nullptr;
+            dexedComponents.clear();
+            dexedComponents[i] = nullptr;
+        }
+    }
+
     if (tabbedComponent) {
         removeChildComponent(tabbedComponent.get());
     }
-
+    
     tabbedComponent = nullptr;
     detuneSliderAttachment = nullptr;
     panSliderAttachment = nullptr;
@@ -98,7 +108,8 @@ void PluginAudioProcessorEditor::resized()
     panSlider.setBounds(0, 0, 100, 100);
     detuneSlider.setBounds(100, 0, 100, 100);
 
-
     // Add tabbed component to hold the Dexed editors
-    tabbedComponent->setBounds(0, 100, getWidth(), getHeight() - 100);
+    if (tabbedComponent != nullptr) {
+        tabbedComponent->setBounds(0, 100, getWidth(), getHeight() - 100);
+    }
 }
