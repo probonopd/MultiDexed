@@ -71,7 +71,7 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
     for (int i = 0; i < tabbedComponent->getNumTabs(); ++i) {
         juce::Component* tabContent = tabbedComponent->getTabContentComponent(i);
         if (tabContent != nullptr) {
-            tabContent->removeFromParentComponent();
+            tabContent->removeFromParent();
         }
     }
 
