@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -31,18 +23,21 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
         dexedComponents[i] = std::make_unique<juce::Component>();
         pluginAudioProcessor->dexedPluginInstances[i]->createEditorIfNeeded();
         dexedComponents[i]->addAndMakeVisible(pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor());
+
         // Name the first tab "Master", and the rest "Dexed 1", "Dexed 2", etc.
         if (i == 0) {
             tabbedComponent->addTab(juce::String("Master"), backgroundColor, dexedComponents[i].get(), true);
-        }
-        else {
+        } else {
             tabbedComponent->addTab(juce::String("Dexed ") + juce::String(i), backgroundColor, dexedComponents[i].get(), true);
         }
+
+        tabbedComponent->addTab(juce::String("MultiDexed"), backgroundColor, dexedComponents[i].get(), true);
+
         dexedEditors[i] = pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor();
         dexedComponents[i]->setSize(dexedEditors[i]->getWidth(), dexedEditors[i]->getHeight());
         tabbedComponent->setSize(dexedComponents[i]->getWidth(), dexedComponents[i]->getHeight() + tabbedComponent->getTabBarDepth());
     }
-        
+
     // Make the tabbed component visible
     tabbedComponent->setVisible(true);
 
@@ -53,23 +48,29 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     addAndMakeVisible(detuneSlider);
     detuneSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
     detuneSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 50, 20);
-
     detuneSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(pluginAudioProcessor->apvts, "detuneSpread", detuneSlider);
 
     addAndMakeVisible(panSlider);
     panSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
     panSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 50, 20);
     panSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(pluginAudioProcessor->apvts, "panSpread", panSlider);
+
     addAndMakeVisible(panLabel);
     panLabel.setText("Pan", juce::dontSendNotification);
     panLabel.attachToComponent(&panSlider, false);
-}   
+}
 
+//==============================================================================
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    // Hide the tabbed component
-    if (tabbedComponent) {
-        tabbedComponent->setVisible(false);
+    // Open the last tab before deleting the tabbed component
+    tabbedComponent->setCurrentTabIndex(tabbedComponent->getNumTabs() - 1);
+
+    // Inform the Dexed instances that the editor is being deleted
+    for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
+        audioProcessor.dexedPluginInstances[i]->editorBeingDeleted(dexedEditors[i]);
     }
+
+    pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor()->setVisible(false);
 
     // Clean up Dexed components and detach slider attachments
     for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
@@ -83,13 +84,7 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
 }
 
 //==============================================================================
-void PluginAudioProcessorEditor::paint(juce::Graphics &g)
-{
-
-}
-
-void PluginAudioProcessorEditor::resized()
-{
+void PluginAudioProcessorEditor::resized() {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 
@@ -100,4 +95,9 @@ void PluginAudioProcessorEditor::resized()
     if (tabbedComponent != nullptr) {
         tabbedComponent->setBounds(0, 100, getWidth(), getHeight() - 100);
     }
+}
+
+//==============================================================================
+void PluginAudioProcessorEditor::paint(juce::Graphics &g) {
+    // Custom painting code here
 }
