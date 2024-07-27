@@ -61,6 +61,20 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     panLabel.setText("Pan", juce::dontSendNotification);
     panLabel.attachToComponent(&panSlider, false);
 
+    // Repaint the tabbed component
+    tabbedComponent->repaint();
+
+    // Repaint the contents of the first tab
+    if (tabbedComponent->getNumTabs() > 0)
+    {
+        juce::Component* firstTabContent = tabbedComponent->getTabContentComponent(0);
+        if (firstTabContent != nullptr)
+        {
+            firstTabContent->setVisible(true);
+            firstTabContent->repaint();
+        }
+    }
+
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
