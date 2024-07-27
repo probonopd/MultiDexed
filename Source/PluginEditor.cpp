@@ -63,18 +63,6 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    // Clean up Dexed components and detach slider attachments
-    for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
-        dexedEditors[i] = nullptr;
-        dexedComponents[i] = nullptr;
-    }
-
-    tabbedComponent = nullptr;
-    detuneSliderAttachment = nullptr;
-    panSliderAttachment = nullptr;
-}
-
-PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
     // Detach slider attachments
     detuneSliderAttachment = nullptr;
     panSliderAttachment = nullptr;
