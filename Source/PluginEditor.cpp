@@ -72,17 +72,13 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
         tabbedComponent->clearTabs();
     }
 
-     // Clean up Dexed components and detach slider attachments
-    if (!dexedComponents.empty() && !dexedEditors.empty()) {
-        for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
-            if (dexedComponents[i]) {
-                dexedComponents[i]->removeAllChildren();
-            }
-            dexedEditors.clear();
-            dexedEditors[i] = nullptr;
-            dexedComponents.clear();
+    // Clean up Dexed components and detach slider attachments
+    for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
+        if (dexedComponents[i]) {
+            dexedComponents[i]->removeAllChildren();
             dexedComponents[i] = nullptr;
         }
+        dexedEditors[i] = nullptr;
     }
 
     if (tabbedComponent) {
