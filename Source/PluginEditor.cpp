@@ -75,12 +75,10 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
 
     // Clean up Dexed components and detach slider attachments
     for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
-        if (i < dexedComponents.size() && dexedComponents[i]) {
+        if (dexedComponents[i]) {
             dexedComponents[i] = nullptr;
         }
-        if (i < dexedEditors.size()) {
-            dexedEditors[i] = nullptr;
-        }
+        dexedEditors[i] = nullptr;
     }
 
     detuneSliderAttachment = nullptr;
