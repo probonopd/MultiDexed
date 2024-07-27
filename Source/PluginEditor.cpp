@@ -66,21 +66,18 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
 }   
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-
-// Remove all tabs from the tabbed component
+    // Remove all tabs from the tabbed component
     if (tabbedComponent) {
         tabbedComponent->clearTabs();
-        tabbedComponent = nullptr;
     }
 
     // Clean up Dexed components and detach slider attachments
     for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
-        if (dexedComponents[i]) {
-            dexedComponents[i] = nullptr;
-        }
         dexedEditors[i] = nullptr;
+        dexedComponents[i] = nullptr;
     }
 
+    tabbedComponent = nullptr;
     detuneSliderAttachment = nullptr;
     panSliderAttachment = nullptr;
 }
