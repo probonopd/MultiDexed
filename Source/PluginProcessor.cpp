@@ -34,7 +34,7 @@ PluginAudioProcessor::PluginAudioProcessor()
 
     // Windows
     if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::Windows) {
-        pluginPath = "C:\\Program Files\\Common Files\\VST3\\Dexed.vst3";
+        pluginPath = "C:\\Program Files\\Common Files\\VST3\\Dexed.vst3\\Contents\\x86_64-win\\Dexed.vst3";
     }
 
     // MacOS
