@@ -487,7 +487,19 @@ void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newVa
     }
     
     // Get the parameter that changed
-    juce::AudioProcessorParameter* parameter = dexedPluginInstances[0]->getParameters()[parameterIndex];
+    juce::AudioProcessorParameter* parameter = nullptr;
+    for (int i = 0; i < dexedPluginInstances[0]->getParameters().size(); i++) {
+        if (dexedPluginInstances[0]->getParameters()[i]->getParameterIndex() == parameterIndex) {
+            parameter = dexedPluginInstances[0]->getParameters()[i];
+            break;
+        }
+    }
+
+    if (parameter == nullptr) {
+        // Parameter not found, return
+        return;
+    }
+
     // Get the name of the parameter
     juce::String parameterName = parameter->getName(100);
 
@@ -500,8 +512,12 @@ void PluginAudioProcessor::parameterValueChanged(int parameterIndex, float newVa
     // Update the value of the parameter in all other plugin instances
     for (int i = 1; i < numberOfInstances; i++) {
         if (shouldSynchronize) {
-            juce::AudioProcessorParameter* parameter = dexedPluginInstances[i]->getParameters()[parameterIndex];
-            parameter->setValueNotifyingHost(newValue);
+            for (int j = 0; j < dexedPluginInstances[i]->getParameters().size(); j++) {
+                if (dexedPluginInstances[i]->getParameters()[j]->getParameterIndex() == parameterIndex) {
+                    dexedPluginInstances[i]->getParameters()[j]->setValueNotifyingHost(newValue);
+                    break;
+                }
+            }
         }
         // FIXME: Why does the above work for some parameters but not others (e.g. "OP1 F COARSE")?
     }
