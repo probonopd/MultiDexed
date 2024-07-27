@@ -70,6 +70,12 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
         audioProcessor.dexedPluginInstances[i]->editorBeingDeleted(dexedEditors[i]);
     }
 
+    // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
+    auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
+    if (!pluginAudioProcessor) {
+        return;
+    }
+    
     pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor()->setVisible(false);
 
     // Clean up Dexed components and detach slider attachments
