@@ -69,10 +69,7 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
 
     // Remove tab content components from parent
     for (int i = 0; i < tabbedComponent->getNumTabs(); ++i) {
-        juce::Component* tabContent = tabbedComponent->getTabContentComponent(i);
-        if (tabContent != nullptr) {
-            tabContent->removeFromParent();
-        }
+        tabbedComponent->removeTab(i);
     }
 
     // Set pointers to nullptr
