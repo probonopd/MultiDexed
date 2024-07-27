@@ -66,9 +66,9 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
 }   
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    // Remove all tabs from the tabbed component
+    // Hide the tabbed component
     if (tabbedComponent) {
-        tabbedComponent->clearTabs();
+        tabbedComponent->setVisible(false);
     }
 
     // Clean up Dexed components and detach slider attachments
