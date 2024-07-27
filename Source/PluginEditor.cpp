@@ -60,21 +60,6 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     addAndMakeVisible(panLabel);
     panLabel.setText("Pan", juce::dontSendNotification);
     panLabel.attachToComponent(&panSlider, false);
-
-    // Repaint the tabbed component
-    tabbedComponent->repaint();
-
-    // Repaint the contents of the first tab
-    if (tabbedComponent->getNumTabs() > 0)
-    {
-        juce::Component* firstTabContent = tabbedComponent->getTabContentComponent(0);
-        if (firstTabContent != nullptr)
-        {
-            firstTabContent->setVisible(true);
-            firstTabContent->repaint();
-        }
-    }
-
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
@@ -87,6 +72,30 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
     tabbedComponent = nullptr;
     detuneSliderAttachment = nullptr;
     panSliderAttachment = nullptr;
+}
+
+PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
+    // Detach slider attachments
+    detuneSliderAttachment = nullptr;
+    panSliderAttachment = nullptr;
+
+    // Remove tab content components from parent
+    for (int i = 0; i < tabbedComponent->getNumTabs(); ++i) {
+        juce::Component* tabContent = tabbedComponent->getTabContentComponent(i);
+        if (tabContent != nullptr) {
+            tabContent->removeFromParentComponent();
+        }
+    }
+
+    // Set pointers to nullptr
+    for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
+        dexedEditors[i] = nullptr;
+        dexedComponents[i] = nullptr;
+    }
+
+    tabbedComponent = nullptr;
+
+    // AudioProcessorEditor::~AudioProcessorEditor() will be called automatically
 }
 
 //==============================================================================
