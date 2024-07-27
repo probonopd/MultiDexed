@@ -60,27 +60,19 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     addAndMakeVisible(panLabel);
     panLabel.setText("Pan", juce::dontSendNotification);
     panLabel.attachToComponent(&panSlider, false);
+
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    // Detach slider attachments
-    detuneSliderAttachment = nullptr;
-    panSliderAttachment = nullptr;
-
-    // Remove tab content components from parent
-    for (int i = 0; i < tabbedComponent->getNumTabs(); ++i) {
-        tabbedComponent->removeTab(i);
-    }
-
-    // Set pointers to nullptr
+    // Clean up Dexed components and detach slider attachments
     for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
         dexedEditors[i] = nullptr;
         dexedComponents[i] = nullptr;
     }
 
     tabbedComponent = nullptr;
-
-    // AudioProcessorEditor::~AudioProcessorEditor() will be called automatically
+    detuneSliderAttachment = nullptr;
+    panSliderAttachment = nullptr;
 }
 
 //==============================================================================
