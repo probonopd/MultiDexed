@@ -36,6 +36,7 @@ jobs:
               ./Builds/VisualStudio2019/x64/Release/VST3/MultiDexed.vst3
               ./Builds/VisualStudio2019/x64/Release/Standalone Plugin/MultiDexed.exe
   build-osx:
+    if: false  # Skip this job because it is slow
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v3.3.0
