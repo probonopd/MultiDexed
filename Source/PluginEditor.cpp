@@ -25,19 +25,19 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
 
     // Create a tab for each instance of Dexed
     for (int i = 0; i < pluginAudioProcessor->numberOfInstances; i++) {
-      dexedComponents[i] = std::make_unique<juce::Component>();
-      pluginAudioProcessor->dexedPluginInstances[i]->createEditorIfNeeded();
-      dexedComponents[i]->addAndMakeVisible(pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor());
-      // Name the first tab "Master", and the rest "Dexed 1", "Dexed 2", etc.
-      if (i == 0) {
-          tabbedComponent->addTab(juce::String("Master"), backgroundColor, dexedComponents[i].get(), true);
-      }
-      else {
-          tabbedComponent->addTab(juce::String("Dexed ") + juce::String(i), backgroundColor, dexedComponents[i].get(), true);
-      }
-      dexedEditors[i] = pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor();
-      dexedComponents[i]->setSize(dexedEditors[i]->getWidth(), dexedEditors[i]->getHeight());
-      tabbedComponent->setSize(dexedComponents[i]->getWidth(), dexedComponents[i]->getHeight() + tabbedComponent->getTabBarDepth());
+        dexedComponents[i] = std::make_unique<juce::Component>();
+        pluginAudioProcessor->dexedPluginInstances[i]->createEditorIfNeeded();
+        dexedComponents[i]->addAndMakeVisible(pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor());
+        // Name the first tab "Master", and the rest "Dexed 1", "Dexed 2", etc.
+        if (i == 0) {
+            tabbedComponent->addTab(juce::String("Master"), backgroundColor, dexedComponents[i].get(), true);
+        }
+        else {
+            tabbedComponent->addTab(juce::String("Dexed ") + juce::String(i), backgroundColor, dexedComponents[i].get(), true);
+        }
+        dexedEditors[i] = pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor();
+        dexedComponents[i]->setSize(dexedEditors[i]->getWidth(), dexedEditors[i]->getHeight());
+        tabbedComponent->setSize(dexedComponents[i]->getWidth(), dexedComponents[i]->getHeight() + tabbedComponent->getTabBarDepth());
     }
         
     // Make the tabbed component visible
@@ -64,15 +64,15 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
-    // auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
-    // for (int i = 0; i < pluginAudioProcessor->numberOfInstances; i++) {
-    //   dexedEditors[i] = nullptr;
-    //   dexedComponents[i] = nullptr;
-    // }
-    // tabbedComponent = nullptr;
-    // detuneSliderAttachment = nullptr;
-    // panSliderAttachment = nullptr;
+    // Clean up Dexed components and detach slider attachments
+    for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
+        dexedEditors[i] = nullptr;
+        dexedComponents[i] = nullptr;
+    }
+
+    tabbedComponent = nullptr;
+    detuneSliderAttachment = nullptr;
+    panSliderAttachment = nullptr;
 }
 
 //==============================================================================
