@@ -65,14 +65,6 @@ PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
     // Open the last tab before deleting the tabbed component
     tabbedComponent->setCurrentTabIndex(tabbedComponent->getNumTabs() - 1);
 
-    // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
-    auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
-    if (!pluginAudioProcessor) {
-        return;
-    }
-
-    pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor()->setVisible(false);
-
     // Clean up Dexed components and detach slider attachments
     for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
         dexedEditors[i] = nullptr;
