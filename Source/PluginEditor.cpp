@@ -35,9 +35,9 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
             dexedEditors[i] = activeEditor; // Store the pointer
 
             // ---> FIX ATTEMPT: Explicitly remove from any potential old parent <---
-            if (auto* oldParent = activeEditor->getParentComponent()) {
-                oldParent->removeChildComponent(activeEditor);
-            }
+            // if (auto* oldParent = activeEditor->getParentComponent()) {
+            //     oldParent->removeChildComponent(activeEditor);
+            // }
             // ---> END FIX ATTEMPT <---
 
             // Add the Dexed editor to our new container component for this tab
