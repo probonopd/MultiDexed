@@ -1,8 +1,6 @@
 /*
   ==============================================================================
-
     This file contains the basic framework code for a JUCE plugin editor.
-
   ==============================================================================
 */
 
@@ -14,7 +12,9 @@
 //==============================================================================
 /**
 */
-class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor
+// Make the editor listen to tab changes
+class PluginAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                    public juce::TabbedComponent::Listener // Add this inheritance
 {
 public:
     PluginAudioProcessorEditor (PluginAudioProcessor&);
@@ -24,22 +24,24 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    // --- Add TabbedComponent Listener Method ---
+    void currentTabChanged (int newCurrentTabIndex, const juce::String& newCurrentTabName) override;
+    // ---
+
 private:
-    // This reference is provided as a quick way for your editor to
+    // This reference is provided as a quick way for the editor to
     // access the processor object that created it.
     PluginAudioProcessor& audioProcessor;
-
-    // Pointer to our button
-    juce::TextButton button;
 
     // Pointer to our tabbed component
     std::unique_ptr<juce::TabbedComponent> tabbedComponent;
 
-    // Array with 8 pointers to our Dexed components
+    // Array with 8 pointers to our Dexed container components
     std::unique_ptr<juce::Component> dexedComponents[8];
 
-    // Array with 8 pointers to our Dexed editors
-    juce::AudioProcessorEditor* dexedEditors[8];
+    // Array with 8 pointers to our Dexed editors - We might not need this array anymore
+    // if we fetch the editor dynamically in currentTabChanged. Keep it for now if needed elsewhere.
+    juce::AudioProcessorEditor* dexedEditors[8] = { nullptr }; // Initialize to null
 
     // Sliders for the MultiDexed parameters
     juce::Slider detuneSlider;
@@ -48,9 +50,9 @@ private:
     // Attach the sliders to the parameters
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> detuneSliderAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> panSliderAttachment;
-    
+
     // Labels for the sliders
-    juce::Label detuneLabel;
+    juce::Label detuneLabel; // Needs to be added/managed in .cpp
     juce::Label panLabel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginAudioProcessorEditor)
