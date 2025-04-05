@@ -10,7 +10,7 @@ jobs:
   build-win:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v3.3.0
+    - uses: actions/checkout@v4.2.2
       with:
         fetch-depth: 0
         submodules: recursive
@@ -29,7 +29,7 @@ jobs:
       run: sh -ex ./build/build-win.sh
       shell: bash
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3.1.2
+      uses: actions/upload-artifact@v4
       with:
         name: MultiDexed-win
         path: |
@@ -67,7 +67,7 @@ jobs:
            cd -
       shell: bash
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3.1.2
+      uses: actions/upload-artifact@v4
       with:
         name: MultiDexed-osx
         path: |
@@ -113,7 +113,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v4.2.2
       - name: Retrieve artifacts
         uses: actions/download-artifact@v4
         with:
