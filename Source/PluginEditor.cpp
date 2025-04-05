@@ -14,152 +14,127 @@ PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
     : AudioProcessorEditor(&p), audioProcessor(p)
 {
     // Get our PluginAudioProcessor instance that is defined in PluginProcessor.h
-    auto* pluginAudioProcessor = &audioProcessor;
+    auto pluginAudioProcessor = dynamic_cast<PluginAudioProcessor *>(getAudioProcessor());
 
     // Create a tabbed component
     tabbedComponent = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
     addAndMakeVisible(*tabbedComponent);
 
-    // Get the background color of the window (used for tab background)
+    // Get the background color of the window
     auto backgroundColor = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
 
     // Create a tab for each instance of Dexed
     for (int i = 0; i < pluginAudioProcessor->numberOfInstances; i++) {
-        dexedComponents[i] = std::make_unique<juce::Component>(); // Create container for this tab
-
-        // Ensure the editor exists or create it
+        dexedComponents[i] = std::make_unique<juce::Component>();
         pluginAudioProcessor->dexedPluginInstances[i]->createEditorIfNeeded();
+        // --- Start of Added Block ---
         auto* activeEditor = pluginAudioProcessor->dexedPluginInstances[i]->getActiveEditor();
 
-        if (activeEditor) {
-            dexedEditors[i] = activeEditor; // Store the pointer
-
+        if (activeEditor) // Check if we got a valid editor pointer
+        {
             // ---> FIX ATTEMPT: Explicitly remove from any potential old parent <---
-            // if (auto* oldParent = activeEditor->getParentComponent()) {
-            //     oldParent->removeChildComponent(activeEditor);
-            // }
+            // If the editor still thinks it has a parent from the *previous* window instance,
+            // this might help detach it cleanly before adding it to the new hierarchy.
+            if (auto* oldParent = activeEditor->getParentComponent()) {
+                oldParent->removeChildComponent(activeEditor);
+            }
             // ---> END FIX ATTEMPT <---
 
-            // Add the Dexed editor to our new container component for this tab
-            dexedComponents[i]->addAndMakeVisible(activeEditor);
-
-            // Size the container component to match the Dexed editor's size.
-            int editorWidth = activeEditor->getWidth() > 0 ? activeEditor->getWidth() : 600;
-            int editorHeight = activeEditor->getHeight() > 0 ? activeEditor->getHeight() : 400;
-            dexedComponents[i]->setSize(editorWidth, editorHeight);
-
-            // Ensure the Dexed editor itself fills its container.
-            activeEditor->setBounds(0, 0, editorWidth, editorHeight);
-
-            // Add the container component (which holds the Dexed editor) as a tab page
-            juce::String tabName = (i == 0) ? "Master" : juce::String("Dexed ") + juce::String(i);
-            tabbedComponent->addTab(tabName, backgroundColor, dexedComponents[i].get(), true);
-
-        } else {
-            DBG("Error: Could not get active editor for Dexed instance " + juce::String(i));
-            dexedEditors[i] = nullptr;
-            juce::String tabName = (i == 0) ? "Master (Error)" : juce::String("Dexed ") + juce::String(i) + " (Error)";
-            tabbedComponent->addTab(tabName, juce::Colours::red, nullptr, true);
+            dexedComponents[i]->addAndMakeVisible(activeEditor); // Add Dexed's editor to our container
         }
-    } // --- END OF THE INSTANCE LOOP ---
+        // --- End of Added Block (Original line replaced by the block above) ---
 
-    // --- Determine Overall Size (Moved Outside Loop) ---
-    int finalTabContentWidth = 600;
-    int finalTabContentHeight = 400;
-    int tabBarDepth = tabbedComponent->getTabBarDepth();
+        // Name the first tab "Master", and the rest "Dexed 1", "Dexed 2", etc.
+        if (i == 0) {
+            tabbedComponent->addTab(juce::String("Master"), backgroundColor, dexedComponents[i].get(), true);
+        }
+        else {
+            tabbedComponent->addTab(juce::String("Dexed ") + juce::String(i), backgroundColor, dexedComponents[i].get(), true);
+        }
 
-    for (int i = 0; i < pluginAudioProcessor->numberOfInstances; ++i) {
-        if (dexedEditors[i] != nullptr && dexedEditors[i]->getWidth() > 0 && dexedEditors[i]->getHeight() > 0) {
-            finalTabContentWidth = dexedEditors[i]->getWidth();
-            finalTabContentHeight = dexedEditors[i]->getHeight();
-            break;
+        // --- Re-fetch activeEditor pointer *after* potential detachment and re-adding
+        //     Or better, use the 'activeEditor' variable from the block above.
+        //     We need the pointer stored in dexedEditors[i] and used for setSize.
+        //     Let's reuse the variable 'activeEditor' if it's valid.
+        // ---
+        if (activeEditor) // Use the pointer obtained earlier
+        {
+             dexedEditors[i] = activeEditor; // Store the pointer
+             // Set size using the potentially valid editor pointer
+             dexedComponents[i]->setSize(dexedEditors[i]->getWidth(), dexedEditors[i]->getHeight());
+             tabbedComponent->setSize(dexedComponents[i]->getWidth(), dexedComponents[i]->getHeight() + tabbedComponent->getTabBarDepth());
+        } else {
+            // Handle case where editor was null initially or became problematic
+            dexedEditors[i] = nullptr;
+            // Optionally set a default size for the tab component if editor is missing
+            // tabbedComponent->setSize(600, 400 + tabbedComponent->getTabBarDepth());
         }
     }
 
-    tabbedComponent->setSize(finalTabContentWidth, finalTabContentHeight + tabBarDepth);
+    // Make the tabbed component visible
+    tabbedComponent->setVisible(true);
 
-    const int controlsAreaHeight = 100;
-    setSize(tabbedComponent->getWidth(), tabbedComponent->getHeight() + controlsAreaHeight);
-    // --- End Sizing Logic ---
-
+    // Set the size of the editor window (Original logic)
+    // Note: This uses the size from the *last* iteration's editor/component
+    setSize(tabbedComponent->getWidth(), tabbedComponent->getHeight() + 100);
 
     // Sliders for the MultiDexed parameters
     addAndMakeVisible(detuneSlider);
     detuneSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
     detuneSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 50, 20);
+    // Missing label addAndMakeVisible and attachToComponent in original code
     detuneSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(pluginAudioProcessor->apvts, "detuneSpread", detuneSlider);
-    addAndMakeVisible(detuneLabel);
-    detuneLabel.setText("Detune", juce::dontSendNotification);
-    detuneLabel.attachToComponent(&detuneSlider, false);
-    detuneLabel.setJustificationType(juce::Justification::centred);
-
 
     addAndMakeVisible(panSlider);
     panSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
     panSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 50, 20);
     panSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(pluginAudioProcessor->apvts, "panSpread", panSlider);
-    addAndMakeVisible(panLabel);
-    panLabel.setText("Pan Spread", juce::dontSendNotification);
-    panLabel.attachToComponent(&panSlider, false);
-    panLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(panLabel); // This was present in original .h but not added/attached in original .cpp constructor
+    panLabel.setText("Pan", juce::dontSendNotification);
+    panLabel.attachToComponent(&panSlider, false); // This was present in original .h but not added/attached in original .cpp constructor
 
 }
 
 PluginAudioProcessorEditor::~PluginAudioProcessorEditor() {
-    detuneSliderAttachment = nullptr;
-    panSliderAttachment = nullptr;
-
+    // Clean up Dexed components and detach slider attachments
+    // Note: Original code had this loop condition using audioProcessor.numberOfInstances,
+    //       which is fine. Using the constant from the header is also okay if it matches.
+    // Let's stick to the original code's member variable access.
     for (int i = 0; i < audioProcessor.numberOfInstances; i++) {
-        dexedEditors[i] = nullptr;
+        // No need to manually delete unique_ptr contents, but nulling pointers is okay
+        dexedEditors[i] = nullptr; // Null out the raw pointer
+        dexedComponents[i] = nullptr; // Reset the unique_ptr for the container
     }
 
-    tabbedComponent = nullptr;
+    tabbedComponent = nullptr; // Reset the unique_ptr for the tabbed component
+    detuneSliderAttachment = nullptr; // Reset slider attachments first
+    panSliderAttachment = nullptr;
 }
 
 //==============================================================================
 void PluginAudioProcessorEditor::paint(juce::Graphics &g)
 {
+    // Original paint function was empty
+    // It's generally good practice to fill the background:
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 }
 
 void PluginAudioProcessorEditor::resized()
 {
-    auto bounds = getLocalBounds();
-    auto controlsArea = bounds.removeFromTop(100);
+    // This is generally where you'll want to lay out the positions of any
+    // subcomponents in your editor..
 
-    int sliderWidth = 80;
-    int sliderHeight = 80;
-    // int labelHeight = 20; // Not needed if using attachToComponent
+    // Original resized() logic:
+    panSlider.setBounds(0, 0, 100, 100);
+    detuneSlider.setBounds(100, 0, 100, 100);
 
-    juce::Rectangle<int> detuneSliderArea = controlsArea.removeFromLeft(sliderWidth + 20);
-    detuneSlider.setBounds(detuneSliderArea.getX() + 10, detuneSliderArea.getY(), sliderWidth, sliderHeight);
 
-    juce::Rectangle<int> panSliderArea = controlsArea.removeFromLeft(sliderWidth + 20);
-    panSlider.setBounds(panSliderArea.getX() + 10, panSliderArea.getY(), sliderWidth, sliderHeight);
+    // Add tabbed component to hold the Dexed editors
+    // Original logic positions it below the sliders' initial area
+    tabbedComponent->setBounds(0, 100, getWidth(), getHeight() - 100);
 
-    // Position the tabbed component in the remaining area
-    tabbedComponent->setBounds(bounds);
-
-    // --- FIX for Build Error C2039 ---
-    // Resize the *content* components within each tab
-    for (int i = 0; i < tabbedComponent->getNumTabs(); ++i) {
-        if (auto* tabContentComponent = tabbedComponent->getTabContentComponent(i)) {
-             // Calculate the bounds available for the tab's content
-             auto contentBounds = tabbedComponent->getLocalBounds(); // Start with the TabbedComponent's full area
-             // Remove the area occupied by the tab bar (assuming tabs are at the top)
-             contentBounds.removeFromTop(tabbedComponent->getTabBarDepth());
-
-             // Set the bounds of our container component (e.g., dexedComponents[i])
-             tabContentComponent->setBounds(contentBounds);
-
-             // Now ensure the Dexed editor *inside* the container is also resized
-             // to fill its container (which now has the correct contentBounds)
-             if (tabContentComponent->getNumChildComponents() > 0) {
-                 if(auto* dexedEditorComp = tabContentComponent->getChildComponent(0)) {
-                     dexedEditorComp->setBounds(tabContentComponent->getLocalBounds()); // Fill the container
-                 }
-             }
-        }
-    }
-    // --- End Fix ---
+    // NOTE: The original resized() did NOT resize the components *inside* the tabs.
+    // This means the Dexed editors would likely not resize correctly if the main window
+    // was resized. The fix for the build error C2039 addressed this, but per your request,
+    // that fix is NOT included here, reverting to the original potentially problematic resizing.
 }
