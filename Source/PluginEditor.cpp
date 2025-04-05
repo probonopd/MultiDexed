@@ -6,9 +6,9 @@
   ==============================================================================
 */
 
+#include <JuceHeader.h>
 #include <juce_gui_basics/components/juce_TabbedComponent.h>
 #include "PluginProcessor.h"
-#include "PluginEditor.h"
 
 //==============================================================================
 PluginAudioProcessorEditor::PluginAudioProcessorEditor(PluginAudioProcessor &p)
