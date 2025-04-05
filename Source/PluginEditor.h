@@ -7,6 +7,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <juce_gui_basics/components/juce_TabbedComponent.h>
 #include "PluginProcessor.h"
 
 //==============================================================================
